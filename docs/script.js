@@ -23,6 +23,12 @@ const prevButtonEl = document.getElementById('prevButton');
 const nextButtonEl = document.getElementById('nextButton');
 const shuffleButtonEl = document.getElementById('shuffleButton');
 
+// 添加调试日志函数
+function logDebug(message) {
+    console.log(`[DEBUG] ${message}`);
+}
+
+
 // 初始化播放器
 async function initPlayer() {
     const urlParams = new URLSearchParams(window.location.search);
