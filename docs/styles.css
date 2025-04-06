@@ -21,7 +21,7 @@ body {
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    height: 248px; /* 增加高度 */
+    height: 308px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
