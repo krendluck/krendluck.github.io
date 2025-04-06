@@ -4,6 +4,10 @@ let currentIndex = 0;
 let isPlaying = false;
 let lyrics = [];  // 解析后的歌词数组
 let currentLyricIndex = -1;  // 当前显示的歌词索引
+let isShuffleMode = false;           // 随机播放模式状态
+let shuffledPlaylist = [];           // 随机排序后的播放列表
+let playbackHistory = [];            // 播放历史记录（用于随机模式下的"上一首"）
+let currentShuffleIndex = 0;         // 随机播放模式下的当前索引
 
 // DOM元素
 const loadingEl = document.getElementById('loading');
@@ -17,6 +21,7 @@ const prevAudioPlayerEl = document.getElementById('prevAudioPlayer');
 const nextAudioPlayerEl = document.getElementById('nextAudioPlayer');
 const prevButtonEl = document.getElementById('prevButton');
 const nextButtonEl = document.getElementById('nextButton');
+const shuffleButtonEl = document.getElementById('shuffleButton');
 
 // 初始化播放器
 async function initPlayer() {
@@ -59,6 +64,86 @@ async function initPlayer() {
     } else {
         showError('未提供有效的歌曲信息');
     }
+    shuffleButtonEl.addEventListener('click', toggleShuffle);
+}
+
+// 添加切换随机播放模式的函数
+function toggleShuffle() {
+    isShuffleMode = !isShuffleMode;
+    
+    if (isShuffleMode) {
+        // 激活随机播放
+        shuffleButtonEl.classList.add('active');
+        
+        // 创建随机播放列表
+        shuffledPlaylist = createShuffledPlaylist();
+        
+        // 找到当前歌曲在随机列表中的位置
+        currentShuffleIndex = shuffledPlaylist.indexOf(currentIndex);
+        if (currentShuffleIndex === -1) {
+            currentShuffleIndex = 0;
+        }
+        
+        // 重置播放历史
+        playbackHistory = [currentIndex];
+    } else {
+        // 取消随机播放
+        shuffleButtonEl.classList.remove('active');
+    }
+    
+    // 更新预加载
+    preloadAdjacentSongs(currentIndex);
+
+    savePlayerState();
+}
+
+// 创建随机排序的播放列表
+function createShuffledPlaylist() {
+    // 创建包含所有索引的数组
+    const indices = Array.from({ length: playlist.length }, (_, i) => i);
+    
+    // 排除当前播放的歌曲
+    const currentSong = indices.splice(currentIndex, 1)[0];
+    
+    // Fisher-Yates 洗牌算法
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    
+    // 将当前歌曲放在第一位
+    indices.unshift(currentSong);
+    
+    return indices;
+}
+
+// 预加载相邻歌曲
+function preloadAdjacentSongs(index) {
+    let prevIndex, nextIndex;
+    
+    if (isShuffleMode) {
+        // 在随机模式下获取前后歌曲
+        prevIndex = playbackHistory.length > 1 ? playbackHistory[playbackHistory.length - 2] : index;
+        
+        const nextShuffleIndex = (currentShuffleIndex + 1) % shuffledPlaylist.length;
+        nextIndex = shuffledPlaylist[nextShuffleIndex];
+    } else {
+        // 常规模式
+        prevIndex = (index - 1 + playlist.length) % playlist.length;
+        nextIndex = (index + 1) % playlist.length;
+    }
+    
+    // 预加载前一首歌
+    if (prevIndex !== index && playlist[prevIndex]) {
+        prevAudioPlayerEl.src = playlist[prevIndex].url;
+        prevAudioPlayerEl.load();
+    }
+    
+    // 预加载后一首歌
+    if (nextIndex !== index && playlist[nextIndex]) {
+        nextAudioPlayerEl.src = playlist[nextIndex].url;
+        nextAudioPlayerEl.load();
+    }
 }
 
 // 从JSON文件加载播放列表
@@ -96,20 +181,25 @@ function loadSong(index) {
     audioPlayerEl.src = song.url;
     currentIndex = index;
     
-    // 预加载前一首歌
-    const prevIndex = (index - 1 + playlist.length) % playlist.length;
-    if (prevIndex !== index && playlist[prevIndex]) {
-        prevAudioPlayerEl.src = playlist[prevIndex].url;
-        prevAudioPlayerEl.load(); // 开始加载但不播放
+    // 更新随机播放相关状态
+    if (isShuffleMode) {
+        currentShuffleIndex = shuffledPlaylist.indexOf(index);
+        if (currentShuffleIndex === -1) {
+            // 如果当前歌曲不在随机列表中
+            shuffledPlaylist = createShuffledPlaylist();
+            currentShuffleIndex = 0;
+        }
+        
+        // 更新历史记录
+        playbackHistory.push(index);
+        if (playbackHistory.length > 10) {
+            playbackHistory.shift();
+        }
     }
     
-    // 预加载后一首歌
-    const nextIndex = (index + 1) % playlist.length;
-    if (nextIndex !== index && playlist[nextIndex]) {
-        nextAudioPlayerEl.src = playlist[nextIndex].url;
-        nextAudioPlayerEl.load(); // 开始加载但不播放
-    }
-
+    // 预加载相邻歌曲
+    preloadAdjacentSongs(index);
+    
     // 加载歌词
     lyrics = [];
     currentLyricIndex = -1;
@@ -244,9 +334,21 @@ function updateLyrics(currentTime) {
 
 // 播放上一首
 function playPrevious() {
-    const prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+    let prevIndex;
     
-    // 如果前一首歌已经预加载
+    if (isShuffleMode && playbackHistory.length > 1) {
+        // 随机模式下使用历史记录
+        playbackHistory.pop(); // 移除当前歌曲
+        prevIndex = playbackHistory[playbackHistory.length - 1]; // 获取上一首
+        
+        // 更新随机索引
+        currentShuffleIndex = shuffledPlaylist.indexOf(prevIndex);
+    } else {
+        // 常规模式或无历史记录时
+        prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+    }
+    
+    // 如果前一首歌已预加载
     if (prevAudioPlayerEl.src && prevAudioPlayerEl.readyState >= 2) {
         // 保存当前播放状态
         const wasPlaying = !audioPlayerEl.paused;
@@ -254,7 +356,12 @@ function playPrevious() {
         // 交换音频元素
         const currentSrc = audioPlayerEl.src;
         audioPlayerEl.src = prevAudioPlayerEl.src;
-
+        
+        // 更新UI
+        songTitleEl.textContent = playlist[prevIndex].title || "未知歌曲";
+        songIndexEl.textContent = `${prevIndex + 1}/${playlist.length}`;
+        currentIndex = prevIndex;
+        
         // 加载歌词
         lyrics = [];
         currentLyricIndex = -1;
@@ -265,30 +372,36 @@ function playPrevious() {
             audioPlayerEl.play();
         }
         
-        // 更新UI
-        const song = playlist[prevIndex];
-        songTitleEl.textContent = song.title || '未知歌曲';
-        songIndexEl.textContent = `${prevIndex + 1}/${playlist.length}`;
-        currentIndex = prevIndex;
-        
-        // 预加载新的"前一首"歌曲
-        const newPrevIndex = (prevIndex - 1 + playlist.length) % playlist.length;
-        prevAudioPlayerEl.src = playlist[newPrevIndex].url;
-        prevAudioPlayerEl.load();
-        
-        // 更新"后一首"为原来的当前歌曲
-        nextAudioPlayerEl.src = currentSrc;
+        // 更新预加载
+        preloadAdjacentSongs(prevIndex);
     } else {
-        // 如果预加载不可用，使用常规方法
+        // 常规加载
         loadSong(prevIndex);
     }
 }
 
 // 播放下一首
 function playNext() {
-    const nextIndex = (currentIndex + 1) % playlist.length;
+    let nextIndex;
     
-    // 如果下一首歌已经预加载
+    if (isShuffleMode) {
+        // 随机模式下的下一首
+        currentShuffleIndex = (currentShuffleIndex + 1) % shuffledPlaylist.length;
+        nextIndex = shuffledPlaylist[currentShuffleIndex];
+        
+        // 记录播放历史
+        playbackHistory.push(nextIndex);
+        
+        // 历史记录限制在10首内
+        if (playbackHistory.length > 10) {
+            playbackHistory.shift();
+        }
+    } else {
+        // 常规模式下的下一首
+        nextIndex = (currentIndex + 1) % playlist.length;
+    }
+    
+    // 如果下一首歌已预加载
     if (nextAudioPlayerEl.src && nextAudioPlayerEl.readyState >= 2) {
         // 保存当前播放状态
         const wasPlaying = !audioPlayerEl.paused;
@@ -296,7 +409,12 @@ function playNext() {
         // 交换音频元素
         const currentSrc = audioPlayerEl.src;
         audioPlayerEl.src = nextAudioPlayerEl.src;
-
+        
+        // 更新UI
+        songTitleEl.textContent = playlist[nextIndex].title || "未知歌曲";
+        songIndexEl.textContent = `${nextIndex + 1}/${playlist.length}`;
+        currentIndex = nextIndex;
+        
         // 加载歌词
         lyrics = [];
         currentLyricIndex = -1;
@@ -307,22 +425,38 @@ function playNext() {
             audioPlayerEl.play();
         }
         
-        // 更新UI
-        const song = playlist[nextIndex];
-        songTitleEl.textContent = song.title || '未知歌曲';
-        songIndexEl.textContent = `${nextIndex + 1}/${playlist.length}`;
-        currentIndex = nextIndex;
-        
-        // 预加载新的"下一首"歌曲
-        const newNextIndex = (nextIndex + 1) % playlist.length;
-        nextAudioPlayerEl.src = playlist[newNextIndex].url;
-        nextAudioPlayerEl.load();
-        
-        // 更新"前一首"为原来的当前歌曲
-        prevAudioPlayerEl.src = currentSrc;
+        // 更新预加载
+        preloadAdjacentSongs(nextIndex);
     } else {
-        // 如果预加载不可用，使用常规方法
+        // 常规加载
         loadSong(nextIndex);
+    }
+}
+
+// 保存播放器状态
+function savePlayerState() {
+    try {
+        localStorage.setItem('musicPlayer_shuffleMode', isShuffleMode);
+    } catch (e) {
+        console.log('无法保存播放器状态');
+    }
+}
+
+// 加载播放器状态
+function loadPlayerState() {
+    try {
+        const savedShuffleMode = localStorage.getItem('musicPlayer_shuffleMode');
+        if (savedShuffleMode === 'true') {
+            isShuffleMode = true;
+            shuffleButtonEl.classList.add('active');
+            
+            // 创建随机播放列表
+            shuffledPlaylist = createShuffledPlaylist();
+            currentShuffleIndex = 0;
+            playbackHistory = [currentIndex];
+        }
+    } catch (e) {
+        console.log('无法加载播放器状态');
     }
 }
 
@@ -335,6 +469,9 @@ audioPlayerEl.addEventListener('timeupdate', () => {
 function showPlayer() {
     loadingEl.style.display = 'none';
     playerEl.style.display = 'block';
+
+    // 加载保存的播放器状态
+    loadPlayerState();
 }
 
 // 显示错误

@@ -75,15 +75,15 @@ audio {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px; 
 }
 
 .button {
     background: #f1f1f1;
     border: none;
     border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    margin: 0 10px;
+    width: 36px;
+    height: 36px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -94,6 +94,15 @@ audio {
 
 .button:hover {
     background: #e1e1e1;
+}
+
+.button.active {
+    background: #007aff;
+    color: white;
+}
+
+.button.active:hover {
+    background: #0056b3;
 }
 
 .error {
