@@ -20,12 +20,14 @@
             <div class="song-index" id="songIndex">0/0</div>
         </div>
         
-        <!-- 当前歌曲播放器 -->
         <audio controls id="audioPlayer"></audio>
-        
-        <!-- 预加载播放器 (隐藏) -->
         <audio id="prevAudioPlayer" preload="auto" style="display:none;"></audio>
         <audio id="nextAudioPlayer" preload="auto" style="display:none;"></audio>
+        
+        <!-- 添加歌词容器 -->
+        <div id="lyrics-container" class="lyrics-container">
+            <div class="lyrics-placeholder">暂无歌词</div>
+        </div>
         
         <div class="controls">
             <button class="button" id="prevButton">⏮</button>
