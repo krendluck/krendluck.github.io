@@ -36,7 +36,19 @@
             <button class="button" id="shuffleButton" title="随机播放">🔀</button>
         </div>
     </div>
-    
+    <div id="debug" style="font-size:10px; color:#999;"></div>
+
+    <script>
+    function logDebug(message) {
+    const debugElement = document.getElementById('debug');
+    const timestamp = new Date().toLocaleTimeString();
+    debugElement.innerHTML += `${timestamp}: ${message}<br>`;
+    }
+
+    audioPlayerEl.addEventListener('loadstart', () => logDebug('开始加载音频'));
+    audioPlayerEl.addEventListener('canplay', () => logDebug('音频可以播放'));
+    audioPlayerEl.addEventListener('error', (e) => logDebug(`音频错误: ${e.target.error?.message || '未知'}`));
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
