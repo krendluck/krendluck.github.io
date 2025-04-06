@@ -141,3 +141,27 @@ audio {
     color: #999;
     padding: 10px;
 }
+
+/* 音量控制样式 */
+.volume-control {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+#volumeSlider {
+    width: 80px;
+    margin-left: 5px;
+    display: inline-block;
+}
+
+/* 在小屏幕上优化显示 */
+@media (max-width: 480px) {
+    .volume-control {
+        flex-direction: column;
+    }
+    
+    #volumeSlider {
+        width: 60px;
+    }
+}

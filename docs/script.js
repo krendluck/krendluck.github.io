@@ -22,6 +22,8 @@ const nextAudioPlayerEl = document.getElementById('nextAudioPlayer');
 const prevButtonEl = document.getElementById('prevButton');
 const nextButtonEl = document.getElementById('nextButton');
 const shuffleButtonEl = document.getElementById('shuffleButton');
+const volumeButtonEl = document.getElementById('volumeButton');
+const volumeSliderEl = document.getElementById('volumeSlider');
 
 // 添加调试日志函数
 function logDebug(message) {
@@ -472,6 +474,80 @@ function loadPlayerState() {
     }
 }
 
+
+// 添加音量控制函数
+function setVolume(value) {
+    // 设置三个音频元素的音量
+    audioPlayerEl.volume = value;
+    prevAudioPlayerEl.volume = value;
+    nextAudioPlayerEl.volume = value;
+    
+    // 更新音量按钮图标
+    updateVolumeIcon(value);
+}
+
+function updateVolumeIcon(volume) {
+    if (volume === 0) {
+        volumeButtonEl.textContent = '🔇';
+    } else if (volume < 0.5) {
+        volumeButtonEl.textContent = '🔉';
+    } else {
+        volumeButtonEl.textContent = '🔊';
+    }
+}
+
+// 静音/取消静音功能
+let lastVolume = 1; // 储存静音前的音量
+
+function toggleMute() {
+    if (audioPlayerEl.volume > 0) {
+        lastVolume = audioPlayerEl.volume;
+        setVolume(0);
+        volumeSliderEl.value = 0;
+    } else {
+        setVolume(lastVolume);
+        volumeSliderEl.value = lastVolume;
+    }
+    savePlayerState();
+}
+
+// 修改保存状态函数，添加音量设置
+function savePlayerState() {
+    try {
+        localStorage.setItem('musicPlayer_shuffleMode', isShuffleMode.toString());
+        localStorage.setItem('musicPlayer_volume', audioPlayerEl.volume.toString());
+    } catch (e) {
+        console.log('无法保存播放器状态');
+    }
+}
+
+// 修改加载状态函数，添加音量设置恢复
+function loadPlayerState() {
+    try {
+        // 加载随机播放状态
+        const savedShuffleMode = localStorage.getItem('musicPlayer_shuffleMode');
+        if (savedShuffleMode === 'true') {
+            isShuffleMode = true;
+            shuffleButtonEl.classList.add('active');
+            
+            // 创建随机播放列表
+            shuffledPlaylist = createShuffledPlaylist();
+            currentShuffleIndex = 0;
+            playbackHistory = [currentIndex];
+        }
+        
+        // 加载音量设置
+        const savedVolume = localStorage.getItem('musicPlayer_volume');
+        if (savedVolume !== null) {
+            const volume = parseFloat(savedVolume);
+            setVolume(volume);
+            volumeSliderEl.value = volume;
+        }
+    } catch (e) {
+        console.log('无法加载播放器状态');
+    }
+}
+
 // 添加时间更新监听器以更新歌词
 audioPlayerEl.addEventListener('timeupdate', () => {
     updateLyrics(audioPlayerEl.currentTime);
@@ -497,5 +573,11 @@ prevButtonEl.addEventListener('click', playPrevious);
 nextButtonEl.addEventListener('click', playNext);
 audioPlayerEl.addEventListener('ended', playNext);
 shuffleButtonEl.addEventListener('click', toggleShuffle);
+volumeSliderEl.addEventListener('input', function() {
+    const volume = parseFloat(this.value);
+    setVolume(volume);
+    savePlayerState(); // 保存设置
+});
+volumeButtonEl.addEventListener('click', toggleMute);
 // 初始化
 window.addEventListener('load', initPlayer);
