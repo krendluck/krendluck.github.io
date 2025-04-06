@@ -11,6 +11,8 @@ const songCountEl = document.getElementById('songCount');
 const songTitleEl = document.getElementById('songTitle');
 const songIndexEl = document.getElementById('songIndex');
 const audioPlayerEl = document.getElementById('audioPlayer');
+const prevAudioPlayerEl = document.getElementById('prevAudioPlayer');
+const nextAudioPlayerEl = document.getElementById('nextAudioPlayer');
 const prevButtonEl = document.getElementById('prevButton');
 const nextButtonEl = document.getElementById('nextButton');
 
@@ -87,8 +89,24 @@ function loadSong(index) {
     const song = playlist[index];
     songTitleEl.textContent = song.title || '未知歌曲';
     songIndexEl.textContent = `${index + 1}/${playlist.length}`;
+    
+    // 设置当前歌曲
     audioPlayerEl.src = song.url;
     currentIndex = index;
+    
+    // 预加载前一首歌
+    const prevIndex = (index - 1 + playlist.length) % playlist.length;
+    if (prevIndex !== index && playlist[prevIndex]) {
+        prevAudioPlayerEl.src = playlist[prevIndex].url;
+        prevAudioPlayerEl.load(); // 开始加载但不播放
+    }
+    
+    // 预加载后一首歌
+    const nextIndex = (index + 1) % playlist.length;
+    if (nextIndex !== index && playlist[nextIndex]) {
+        nextAudioPlayerEl.src = playlist[nextIndex].url;
+        nextAudioPlayerEl.load(); // 开始加载但不播放
+    }
     
     // 尝试播放
     audioPlayerEl.play().catch(e => console.log('自动播放被浏览器阻止'));
@@ -98,14 +116,76 @@ function loadSong(index) {
 
 // 播放上一首
 function playPrevious() {
-    const newIndex = (currentIndex - 1 + playlist.length) % playlist.length;
-    loadSong(newIndex);
+    const prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+    
+    // 如果前一首歌已经预加载
+    if (prevAudioPlayerEl.src && prevAudioPlayerEl.readyState >= 2) {
+        // 保存当前播放状态
+        const wasPlaying = !audioPlayerEl.paused;
+        
+        // 交换音频元素
+        const currentSrc = audioPlayerEl.src;
+        audioPlayerEl.src = prevAudioPlayerEl.src;
+        
+        // 如果之前是播放状态，继续播放
+        if (wasPlaying) {
+            audioPlayerEl.play();
+        }
+        
+        // 更新UI
+        const song = playlist[prevIndex];
+        songTitleEl.textContent = song.title || '未知歌曲';
+        songIndexEl.textContent = `${prevIndex + 1}/${playlist.length}`;
+        currentIndex = prevIndex;
+        
+        // 预加载新的"前一首"歌曲
+        const newPrevIndex = (prevIndex - 1 + playlist.length) % playlist.length;
+        prevAudioPlayerEl.src = playlist[newPrevIndex].url;
+        prevAudioPlayerEl.load();
+        
+        // 更新"后一首"为原来的当前歌曲
+        nextAudioPlayerEl.src = currentSrc;
+    } else {
+        // 如果预加载不可用，使用常规方法
+        loadSong(prevIndex);
+    }
 }
 
 // 播放下一首
 function playNext() {
-    const newIndex = (currentIndex + 1) % playlist.length;
-    loadSong(newIndex);
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    
+    // 如果下一首歌已经预加载
+    if (nextAudioPlayerEl.src && nextAudioPlayerEl.readyState >= 2) {
+        // 保存当前播放状态
+        const wasPlaying = !audioPlayerEl.paused;
+        
+        // 交换音频元素
+        const currentSrc = audioPlayerEl.src;
+        audioPlayerEl.src = nextAudioPlayerEl.src;
+        
+        // 如果之前是播放状态，继续播放
+        if (wasPlaying) {
+            audioPlayerEl.play();
+        }
+        
+        // 更新UI
+        const song = playlist[nextIndex];
+        songTitleEl.textContent = song.title || '未知歌曲';
+        songIndexEl.textContent = `${nextIndex + 1}/${playlist.length}`;
+        currentIndex = nextIndex;
+        
+        // 预加载新的"下一首"歌曲
+        const newNextIndex = (nextIndex + 1) % playlist.length;
+        nextAudioPlayerEl.src = playlist[newNextIndex].url;
+        nextAudioPlayerEl.load();
+        
+        // 更新"前一首"为原来的当前歌曲
+        prevAudioPlayerEl.src = currentSrc;
+    } else {
+        // 如果预加载不可用，使用常规方法
+        loadSong(nextIndex);
+    }
 }
 
 // 显示播放器
