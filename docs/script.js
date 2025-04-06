@@ -300,7 +300,7 @@ function playNext() {
         // 加载歌词
         lyrics = [];
         currentLyricIndex = -1;
-        loadLyrics(playlist[prevIndex].lrc);
+        loadLyrics(playlist[nextIndex].lrc);
         
         // 如果之前是播放状态，继续播放
         if (wasPlaying) {
