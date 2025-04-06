@@ -3,7 +3,7 @@ body {
     background: transparent;
     margin: 0;
     padding: 0;
-    height: 140px;
+    height: 280px; /* 增加高度以容纳歌词 */
     overflow: hidden;
 }
 
@@ -21,8 +21,10 @@ body {
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    height: 168px;
+    height: 248px; /* 增加高度 */
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .playlist-info {
@@ -96,4 +98,37 @@ audio {
 
 .error {
     color: #ff3860;
+}
+
+/* 添加歌词区样式 */
+.lyrics-container {
+    flex: 1;
+    overflow-y: auto;
+    margin: 10px 0;
+    padding: 5px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.8);
+    font-size: 14px;
+    max-height: 120px;
+    scroll-behavior: smooth;
+}
+
+.lyrics-line {
+    padding: 2px 0;
+    color: #666;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.lyrics-line.active {
+    color: #000;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.lyrics-placeholder {
+    text-align: center;
+    color: #999;
+    padding: 10px;
 }
