@@ -64,7 +64,6 @@ async function initPlayer() {
     } else {
         showError('未提供有效的歌曲信息');
     }
-    shuffleButtonEl.addEventListener('click', toggleShuffle);
 }
 
 // 添加切换随机播放模式的函数
@@ -74,6 +73,7 @@ function toggleShuffle() {
     if (isShuffleMode) {
         // 激活随机播放
         shuffleButtonEl.classList.add('active');
+        logDebug('随机播放模式已开启');
         
         // 创建随机播放列表
         shuffledPlaylist = createShuffledPlaylist();
@@ -82,6 +82,7 @@ function toggleShuffle() {
         currentShuffleIndex = shuffledPlaylist.indexOf(currentIndex);
         if (currentShuffleIndex === -1) {
             currentShuffleIndex = 0;
+            logDebug('当前歌曲在随机列表中位置异常，已重置为0');
         }
         
         // 重置播放历史
@@ -89,12 +90,17 @@ function toggleShuffle() {
     } else {
         // 取消随机播放
         shuffleButtonEl.classList.remove('active');
+        logDebug('随机播放模式已关闭');
     }
     
     // 更新预加载
     preloadAdjacentSongs(currentIndex);
 
     savePlayerState();
+    
+    // 添加更明显的状态指示
+    const modeText = isShuffleMode ? '随机模式' : '顺序模式';
+    console.log(`播放模式切换为: ${modeText}`);
 }
 
 // 创建随机排序的播放列表
@@ -436,7 +442,7 @@ function playNext() {
 // 保存播放器状态
 function savePlayerState() {
     try {
-        localStorage.setItem('musicPlayer_shuffleMode', isShuffleMode);
+        localStorage.setItem('musicPlayer_shuffleMode', isShuffleMode.toString()); // 修改为明确的字符串
     } catch (e) {
         console.log('无法保存播放器状态');
     }
@@ -484,6 +490,6 @@ function showError(message) {
 prevButtonEl.addEventListener('click', playPrevious);
 nextButtonEl.addEventListener('click', playNext);
 audioPlayerEl.addEventListener('ended', playNext);
-
+shuffleButtonEl.addEventListener('click', toggleShuffle);
 // 初始化
 window.addEventListener('load', initPlayer);
