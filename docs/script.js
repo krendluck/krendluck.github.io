@@ -577,7 +577,7 @@ function loadPlayerState() {
 // 添加从 Notion 加载播放列表的函数
 async function loadPlaylistFromNotion(tag = '') {
     try {
-      const apiUrl = 'https://notion-music-9w66813ll-krendlucks-projects.vercel.app/api/music';
+      const apiUrl = 'https://notion-music-api.vercel.app/api/music';
       const params = new URLSearchParams();
       if (tag) params.append('tag', tag);
       
