@@ -37,62 +37,52 @@ function logDebug(message) {
 async function initPlayer() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    console.log('页面初始化, URL参数:', Object.fromEntries(urlParams));
+    
     // 添加 Notion 支持
     const notionTag = urlParams.get('tag');
     const notionSearch = urlParams.get('search');
-
-    // 如果没有特定参数，默认从Notion加载全部歌曲
-    if (!notionTag && !notionSearch && !urlParams.has('id') && !urlParams.has('url')) {
-        try {
-            await loadPlaylistFromNotion();
-            return;
-        } catch (error) {
-            console.error('默认Notion加载失败:', error);
-            // 失败后继续尝试其他模式
-        }
-    }
-
     
+    console.log(`Notion标签: ${notionTag || '无'}, 搜索关键词: ${notionSearch || '无'}`);
+
+    // 处理搜索请求
     if (notionSearch) {
-    // 优先处理搜索
-    try {
-        await searchSongs(notionSearch);
-        return;
-    } catch (error) {
-        console.error('搜索失败:', error);
-        // 继续尝试其他模式
-    }
-    }
-
-    if (notionTag !== null || urlParams.has('notion')) {
-    // Notion 模式
-    try {
-        await loadPlaylistFromNotion(notionTag);
-        return;
-    } catch (error) {
-        console.error('Notion 数据加载失败:', error);
-        // 继续尝试其他模式
-    }
-    }
-
-    // 尝试获取播放列表ID并加载播放列表
-    const playlistId = urlParams.get('id');
-    if (playlistId) {
+        console.log(`检测到搜索参数: "${notionSearch}", 开始搜索...`);
         try {
-            await loadPlaylistFromJson(playlistId);
+            await searchSongs(notionSearch);
             return;
         } catch (error) {
-            console.error('加载播放列表失败:', error);
-            // 如果播放列表加载失败，尝试单曲模式
+            console.error('搜索失败:', error);
+            // 失败后尝试加载全部歌曲
+            try {
+                await loadPlaylistFromNotion();
+                return;
+            } catch (e) {
+                console.error('默认加载失败:', e);
+            }
         }
     }
-    
+
+    // 处理标签过滤请求
+    if (notionTag !== null || urlParams.has('notion')) {
+        console.log(`加载标签: ${notionTag || '全部'}`);
+        try {
+            await loadPlaylistFromNotion(notionTag);
+            return;
+        } catch (error) {
+            console.error('按标签加载失败:', error);
+            showError(`无法加载标签: ${notionTag}`);
+            return;
+        }
+    }
+
     // 单曲模式
     const title = urlParams.get('title');
     const artist = urlParams.get('artist');
     const url = urlParams.get('url');
     
     if (title && url) {
+        console.log(`加载单曲: ${title} - ${artist || '未知歌手'}`);
         // 单曲模式
         playlist = [{
             title: title,
@@ -109,8 +99,16 @@ async function initPlayer() {
         
         loadSong(0);
         showPlayer();
-    } else {
-        showError('未提供有效的歌曲信息');
+        return;
+    }
+    
+    // 默认情况：加载所有歌曲
+    console.log('无特定参数，加载全部歌曲');
+    try {
+        await loadPlaylistFromNotion();
+    } catch (error) {
+        console.error('加载所有歌曲失败:', error);
+        showError('无法加载音乐库，请稍后再试');
     }
 }
 
@@ -224,10 +222,21 @@ async function loadPlaylistFromJson(playlistId) {
 // 加载指定索引的歌曲
 function loadSong(index) {
     if (index < 0 || index >= playlist.length) {
+        console.error(`无效索引: ${index}, 播放列表长度: ${playlist.length}`);
         return false;
     }
     
     const song = playlist[index];
+    console.log(`加载歌曲: ${song.title}, 索引: ${index}`);
+    console.log(`歌曲URL: ${song.url || '无URL'}`);
+    console.log(`歌词URL: ${song.lrc || '无歌词'}`);
+    
+    if (!song.url) {
+        console.error(`歌曲 ${song.title} 无URL，尝试下一首`);
+        playNext();
+        return false;
+    }
+    
     songTitleEl.textContent = song.title || '未知歌曲';
     songIndexEl.textContent = `${index + 1}/${playlist.length}`;
     
@@ -236,9 +245,14 @@ function loadSong(index) {
     currentIndex = index;
     
     // 添加错误处理
-    audioPlayerEl.onerror = async function() {
+    audioPlayerEl.onerror = async function(e) {
+        console.error(`音频加载错误:`, e);
+        console.error(`错误代码: ${audioPlayerEl.error ? audioPlayerEl.error.code : '未知'}`);
+        console.error(`错误信息: ${audioPlayerEl.error ? audioPlayerEl.error.message : '未知'}`);
+        
         const newUrl = await handleFailedMedia(song, 'audio');
         if (newUrl) {
+            console.log(`获取到新URL: ${newUrl}, 尝试重新加载`);
             audioPlayerEl.src = newUrl;
             audioPlayerEl.play().catch(e => console.log('播放失败:', e));
         } else {
@@ -610,49 +624,67 @@ function loadPlayerState() {
 }
 
 // 检查和处理链接失效
+// 检查和处理链接失效
 async function handleFailedMedia(song, errorType = 'audio') {
     console.log(`${errorType}链接失效: ${song.title}`);
+    console.log(`失效链接: ${errorType === 'audio' ? song.url : song.lrc}`);
+    
+    if (!song.id) {
+        console.error('无法更新链接: 缺少歌曲ID');
+        return null;
+    }
     
     try {
-      // 通知服务器链接失效
-      const response = await fetch(updateApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          songId: song.id, // Notion中的记录ID
-          errorType: errorType, // 'audio' 或 'lrc'
-          url: errorType === 'audio' ? song.url : song.lrc
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`更新请求失败: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && result.updatedUrl) {
-        // 更新本地播放列表中的URL
-        if (errorType === 'audio') {
-          song.url = result.updatedUrl;
-          console.log(`已更新歌曲URL: ${song.title}`);
-          return song.url;
-        } else if (errorType === 'lrc') {
-          song.lrc = result.updatedUrl;
-          console.log(`已更新歌词URL: ${song.title}`);
-          return song.lrc;
+        // 通知服务器链接失效
+        console.log(`发送更新请求到: ${updateApiUrl}`);
+        console.log(`请求参数:`, {
+            songId: song.id,
+            errorType: errorType,
+            url: errorType === 'audio' ? song.url : song.lrc
+        });
+        
+        const response = await fetch(updateApiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                songId: song.id,
+                errorType: errorType,
+                url: errorType === 'audio' ? song.url : song.lrc
+            })
+        });
+        
+        console.log(`更新响应状态: ${response.status}`);
+        
+        if (!response.ok) {
+            throw new Error(`更新请求失败: ${response.status}`);
         }
-      } else {
-        console.error('服务器无法更新链接');
-        return null;
-      }
+        
+        const result = await response.json();
+        console.log('更新响应数据:', result);
+        
+        if (result.success && result.updatedUrl) {
+            // 更新本地播放列表中的URL
+            if (errorType === 'audio') {
+                song.url = result.updatedUrl;
+                console.log(`已更新歌曲URL: ${song.title} - ${song.url}`);
+                return song.url;
+            } else if (errorType === 'lrc') {
+                song.lrc = result.updatedUrl;
+                console.log(`已更新歌词URL: ${song.title} - ${song.lrc}`);
+                return song.lrc;
+            }
+        } else {
+            console.error('服务器无法更新链接', result);
+            return null;
+        }
     } catch (error) {
-      console.error('请求更新链接时出错:', error);
-      return null;
+        console.error('请求更新链接时出错:', error);
+        return null;
     }
 }
+
 // 添加从 Notion 加载播放列表的函数
 async function loadPlaylistFromNotion(tag = '') {
     try {
@@ -702,36 +734,48 @@ async function loadPlaylistFromNotion(tag = '') {
     if (!query || query.trim() === '') return;
     
     try {
-      loadingEl.textContent = '正在搜索...';
-      playerEl.style.display = 'none';
-      loadingEl.style.display = 'block';
-      
-      const apiUrl = 'https://notion-music-api.vercel.app/api/music';
-      const response = await fetch(`${apiUrl}?search=${encodeURIComponent(query)}`);
-      
-      if (!response.ok) {
-        throw new Error(`搜索失败: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      playlist = data.songs || [];
-      
-      if (playlist.length === 0) {
-        showError(`未找到与 "${query}" 相关的歌曲`);
-        return;
-      }
-      
-      // 更新 UI
-      playlistNameEl.textContent = `搜索: ${query}`;
-      songCountEl.textContent = `${playlist.length}首歌曲`;
-      
-      loadSong(0);
-      showPlayer();
+        console.log(`开始搜索: "${query}"`);
+        loadingEl.textContent = '正在搜索...';
+        playerEl.style.display = 'none';
+        loadingEl.style.display = 'block';
+        
+        const searchUrl = `${apiUrl}?search=${encodeURIComponent(query)}`;
+        console.log(`发送请求: ${searchUrl}`);
+        
+        const response = await fetch(searchUrl);
+        console.log(`搜索响应状态: ${response.status}`);
+        
+        if (!response.ok) {
+            throw new Error(`搜索失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`搜索结果: 找到 ${data.songs?.length || 0} 首歌曲`);
+        
+        playlist = data.songs || [];
+        
+        if (playlist.length === 0) {
+            showError(`未找到与 "${query}" 相关的歌曲`);
+            return;
+        }
+        
+        // 输出歌曲详情日志
+        playlist.forEach((song, index) => {
+            console.log(`歌曲 ${index+1}: ${song.title}, URL: ${song.url ? '有效' : '无效'}, 歌词: ${song.lrc ? '有效' : '无效'}`);
+        });
+        
+        // 更新 UI
+        playlistNameEl.textContent = `搜索: ${query}`;
+        songCountEl.textContent = `${playlist.length}首歌曲`;
+        
+        loadSong(0);
+        showPlayer();
     } catch (error) {
-      console.error('搜索出错:', error);
-      showError('搜索失败，请稍后再试');
+        console.error('搜索出错:', error);
+        showError('搜索失败，请稍后再试');
+        throw error;  // 重新抛出错误，让调用者知道搜索失败了
     }
-  }
+}
 
 // 添加时间更新监听器以更新歌词
 audioPlayerEl.addEventListener('timeupdate', () => {
