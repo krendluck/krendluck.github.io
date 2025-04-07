@@ -967,21 +967,7 @@ backToSearchButtonEl.addEventListener('click', () => {
     }
 });
 
-document.getElementById('searchButton').addEventListener('click', function() {
-    const query = document.getElementById('search-input').value;
-    if (query.trim()) {
-      searchSongs(query);
-    }
-  });
-  
-  document.getElementById('searchInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      const query = this.value;
-      if (query.trim()) {
-        searchSongs(query);
-      }
-    }
-  });
+
 
 // 初始化
 window.addEventListener('load', initPlayer);
