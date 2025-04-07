@@ -10,38 +10,49 @@
     <div id="loading" class="loading">加载中...</div>
     
     <div id="player" class="player" style="display: none;">
-        <div class="playlist-info">
-            <div class="playlist-name" id="playlistName">播放列表</div>
-            <div class="song-count" id="songCount">0首歌曲</div>
-        </div>
-        
-        <div class="song-info">
-            <div class="song-title" id="songTitle">加载中...</div>
-            <div class="song-index" id="songIndex">0/0</div>
-        </div>
-        
-        <audio controls id="audioPlayer"></audio>
-        <audio id="prevAudioPlayer" preload="auto" style="display:none;"></audio>
-        <audio id="nextAudioPlayer" preload="auto" style="display:none;"></audio>
-        
-        <!-- 添加歌词容器 -->
-        <div id="lyrics-container" class="lyrics-container">
-            <div class="lyrics-placeholder">暂无歌词</div>
-        </div>
-        
-        <div class="controls">
-            <button class="button" id="prevButton">⏮</button>
-            <button class="button" id="nextButton">⏭</button>
-            <!-- 添加随机播放按钮 -->
-            <button class="button" id="shuffleButton" title="随机播放">🔀</button>
+      <div class="playlist-info">
+          <div class="playlist-name" id="playlistName">播放列表</div>
+          <div class="song-count" id="songCount">0首歌曲</div>
+      </div>
+      
+      <div class="song-info">
+          <div class="song-title" id="songTitle">加载中...</div>
+          <div class="song-index" id="songIndex">0/0</div>
+      </div>
+      
+      <audio controls id="audioPlayer"></audio>
+      <audio id="prevAudioPlayer" preload="auto" style="display:none;"></audio>
+      <audio id="nextAudioPlayer" preload="auto" style="display:none;"></audio>
+      
+      <!-- 添加歌词容器 -->
+      <div id="lyrics-container" class="lyrics-container">
+          <div class="lyrics-placeholder">暂无歌词</div>
+      </div>
+      
+      <div class="controls">
+          <button class="button" id="prevButton">⏮</button>
+          <button class="button" id="nextButton">⏭</button>
+          <!-- 添加随机播放按钮 -->
+          <button class="button" id="shuffleButton" title="随机播放">🔀</button>
 
-            <!-- 添加音量控制 -->
-            <div class="volume-control">
-                <button class="button" id="volumeButton" title="音量">🔊</button>
-                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
-            </div>
+          <!-- 添加音量控制 -->
+          <div class="volume-control">
+              <button class="button" id="volumeButton" title="音量">🔊</button>
+              <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+          </div>
+          <button id="backToSearchButton" class="control-button">返回搜索结果</button>
         </div>
     </div>
+
+    <!-- 在loading和player元素旁边添加 -->
+    <div id="search-results" class="search-results" style="display: none;">
+      <div class="search-header">
+        <h2 id="search-title">搜索结果</h2>
+        <div id="search-count"></div>
+      </div>
+      <div id="search-list" class="song-list"></div>
+    </div>
+
     <div class="search-container">
         <input type="text" id="searchInput" placeholder="搜索歌曲或歌手...">
         <button id="searchButton">🔍</button>

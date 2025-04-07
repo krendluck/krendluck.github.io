@@ -24,6 +24,11 @@ const nextButtonEl = document.getElementById('nextButton');
 const shuffleButtonEl = document.getElementById('shuffleButton');
 const volumeButtonEl = document.getElementById('volumeButton');
 const volumeSliderEl = document.getElementById('volumeSlider');
+const searchResultsEl = document.getElementById('search-results');
+const searchTitleEl = document.getElementById('search-title');
+const searchCountEl = document.getElementById('search-count');
+const searchListEl = document.getElementById('search-list');
+const backToSearchButtonEl = document.getElementById('backToSearchButton');
 const apiUrl = 'https://notion-music-api.vercel.app/api/music';
 const updateApiUrl = 'https://notion-music-api.vercel.app/api/update'; // 用于更新链接的API端点
 
@@ -37,6 +42,10 @@ function logDebug(message) {
 async function initPlayer() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    searchResultsEl.style.display = 'none';
+    playerEl.style.display = 'none';
+    loadingEl.style.display = 'block';
+
     console.log('页面初始化, URL参数:', Object.fromEntries(urlParams));
     
     // 添加 Notion 支持
@@ -267,7 +276,8 @@ function loadSong(index) {
     
     // 尝试播放
     audioPlayerEl.play().catch(e => console.log('自动播放被浏览器阻止'));
-    
+    updateBackButton();
+
     return true;
 }
 
@@ -717,6 +727,7 @@ async function loadPlaylistFromNotion(tag = '') {
         console.log(`开始搜索: "${query}"`);
         loadingEl.textContent = '正在搜索...';
         playerEl.style.display = 'none';
+        searchResultsEl.style.display = 'none';
         loadingEl.style.display = 'block';
         
         const searchUrl = `${apiUrl}?search=${encodeURIComponent(query)}`;
@@ -730,31 +741,86 @@ async function loadPlaylistFromNotion(tag = '') {
         }
         
         const data = await response.json();
-        console.log(`搜索结果: 找到 ${data.songs?.length || 0} 首歌曲`);
+        const songs = data.songs || [];
+        console.log(`搜索结果: 找到 ${songs.length} 首歌曲`);
         
-        playlist = data.songs || [];
-        
-        if (playlist.length === 0) {
+        if (songs.length === 0) {
             showError(`未找到与 "${query}" 相关的歌曲`);
             return;
         }
+        
+        // 存储搜索结果
+        playlist = songs;
         
         // 输出歌曲详情日志
         playlist.forEach((song, index) => {
             console.log(`歌曲 ${index+1}: ${song.title}, URL: ${song.url ? '有效' : '无效'}, 歌词: ${song.lrc ? '有效' : '无效'}`);
         });
         
-        // 更新 UI
-        playlistNameEl.textContent = `搜索: ${query}`;
-        songCountEl.textContent = `${playlist.length}首歌曲`;
+        // 更新搜索结果UI
+        searchTitleEl.textContent = `搜索: ${query}`;
+        searchCountEl.textContent = `找到 ${songs.length} 首歌曲`;
         
-        loadSong(0);
-        showPlayer();
+        // 渲染搜索结果列表
+        renderSearchResults(songs);
+        
+        // 显示搜索结果区域
+        loadingEl.style.display = 'none';
+        searchResultsEl.style.display = 'block';
     } catch (error) {
         console.error('搜索出错:', error);
         showError('搜索失败，请稍后再试');
-        throw error;  // 重新抛出错误，让调用者知道搜索失败了
+        throw error;
     }
+}
+
+function renderSearchResults(songs) {
+    // 清空列表
+    searchListEl.innerHTML = '';
+    
+    // 为每首歌创建列表项
+    songs.forEach((song, index) => {
+        const item = document.createElement('div');
+        item.className = 'song-item';
+        item.dataset.index = index;
+        
+        const title = document.createElement('div');
+        title.className = 'song-title';
+        title.textContent = song.title || '未知歌曲';
+        
+        const artist = document.createElement('div');
+        artist.className = 'song-artist';
+        artist.textContent = song.artist || '未知歌手';
+        
+        item.appendChild(title);
+        item.appendChild(artist);
+        
+        // 添加点击事件
+        item.addEventListener('click', () => {
+            playSongFromSearchResults(index);
+        });
+        
+        searchListEl.appendChild(item);
+    });
+}
+
+// 从搜索结果中播放选定的歌曲
+function playSongFromSearchResults(index) {
+    // 处理高亮显示
+    const items = searchListEl.querySelectorAll('.song-item');
+    items.forEach(item => item.classList.remove('active'));
+    items[index].classList.add('active');
+    
+    // 播放选定歌曲
+    loadSong(index);
+    
+    // 显示播放器
+    searchResultsEl.style.display = 'none';
+    playerEl.style.display = 'block';
+    
+    // 更新播放器界面信息
+    playlistNameEl.textContent = searchTitleEl.textContent;
+    songCountEl.textContent = searchCountEl.textContent;
 }
 
 // 添加时间更新监听器以更新歌词
@@ -765,11 +831,40 @@ audioPlayerEl.addEventListener('timeupdate', () => {
 // 显示播放器
 function showPlayer() {
     loadingEl.style.display = 'none';
+    searchResultsEl.style.display = 'none';
     playerEl.style.display = 'block';
 
     // 加载保存的播放器状态
     loadPlayerState();
 }
+
+// 添加返回搜索结果的事件处理
+backToSearchButtonEl.addEventListener('click', () => {
+    playerEl.style.display = 'none';
+    searchResultsEl.style.display = 'block';
+    
+    // 高亮显示当前播放的歌曲
+    const items = searchListEl.querySelectorAll('.song-item');
+    items.forEach(item => item.classList.remove('active'));
+    
+    const currentItem = searchListEl.querySelector(`[data-index="${currentIndex}"]`);
+    if (currentItem) {
+        currentItem.classList.add('active');
+        currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+
+// 根据情况显示或隐藏返回按钮
+function updateBackButton() {
+    // 仅当是搜索结果时显示返回按钮
+    if (playlistNameEl.textContent.startsWith('搜索:')) {
+        backToSearchButtonEl.style.display = 'inline-block';
+    } else {
+        backToSearchButtonEl.style.display = 'none';
+    }
+}
+
+
 
 // 显示错误
 function showError(message) {
