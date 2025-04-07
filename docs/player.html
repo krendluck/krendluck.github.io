@@ -42,7 +42,32 @@
             </div>
         </div>
     </div>
-    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="搜索歌曲或歌手...">
+        <button id="searchButton">🔍</button>
+      </div>
+      <div class="tags-container" id="tagsContainer">
+        <!-- 标签将由 JavaScript 动态生成 -->
+      </div>
+      
+      <script>
+        // 将搜索事件连接到我们的函数
+        document.getElementById('searchButton').addEventListener('click', function() {
+          const query = document.getElementById('searchInput').value;
+          if (query.trim()) {
+            searchSongs(query);
+          }
+        });
+        
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            const query = this.value;
+            if (query.trim()) {
+              searchSongs(query);
+            }
+          }
+        });
+      </script>
     <script src="script.js"></script>
 </body>
 </html>
