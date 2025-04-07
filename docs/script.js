@@ -35,6 +35,32 @@ function logDebug(message) {
 async function initPlayer() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    // 添加 Notion 支持
+    const notionTag = urlParams.get('tag');
+    const notionSearch = urlParams.get('search');
+
+    if (notionSearch) {
+    // 优先处理搜索
+    try {
+        await searchSongs(notionSearch);
+        return;
+    } catch (error) {
+        console.error('搜索失败:', error);
+        // 继续尝试其他模式
+    }
+    }
+
+    if (notionTag !== null || urlParams.has('notion')) {
+    // Notion 模式
+    try {
+        await loadPlaylistFromNotion(notionTag);
+        return;
+    } catch (error) {
+        console.error('Notion 数据加载失败:', error);
+        // 继续尝试其他模式
+    }
+    }
+
     // 尝试获取播放列表ID并加载播放列表
     const playlistId = urlParams.get('id');
     if (playlistId) {
@@ -547,6 +573,87 @@ function loadPlayerState() {
         console.log('无法加载播放器状态');
     }
 }
+
+// 添加从 Notion 加载播放列表的函数
+async function loadPlaylistFromNotion(tag = '') {
+    try {
+      const apiUrl = 'https://your-vercel-app.vercel.app/api/music';
+      const params = new URLSearchParams();
+      if (tag) params.append('tag', tag);
+      
+      const url = `${apiUrl}${params.toString() ? '?' + params.toString() : ''}`;
+      
+      // 显示加载状态
+      loadingEl.textContent = '正在从 Notion 加载音乐库...';
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      playlist = data.songs || [];
+      
+      if (playlist.length === 0) {
+        throw new Error('播放列表为空');
+      }
+      
+      // 更新 UI
+      playlistNameEl.textContent = tag ? `分类: ${tag}` : 'Notion 音乐库';
+      songCountEl.textContent = `${playlist.length}首歌曲`;
+      
+      // 加载第一首歌
+      loadSong(0);
+      showPlayer();
+      
+      // 如果开启了随机播放模式，需要创建随机列表
+      if (isShuffleMode) {
+        shuffledPlaylist = createShuffledPlaylist();
+        currentShuffleIndex = 0;
+      }
+      
+      console.log(`已从 Notion 加载 ${playlist.length} 首歌曲`);
+    } catch (error) {
+      console.error('从 Notion 加载音乐失败:', error);
+      showError('无法从 Notion 加载音乐库');
+    }
+  }
+  
+  // 搜索功能
+  async function searchSongs(query) {
+    if (!query || query.trim() === '') return;
+    
+    try {
+      loadingEl.textContent = '正在搜索...';
+      playerEl.style.display = 'none';
+      loadingEl.style.display = 'block';
+      
+      const apiUrl = 'https://your-vercel-app.vercel.app/api/music';
+      const response = await fetch(`${apiUrl}?search=${encodeURIComponent(query)}`);
+      
+      if (!response.ok) {
+        throw new Error(`搜索失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      playlist = data.songs || [];
+      
+      if (playlist.length === 0) {
+        showError(`未找到与 "${query}" 相关的歌曲`);
+        return;
+      }
+      
+      // 更新 UI
+      playlistNameEl.textContent = `搜索: ${query}`;
+      songCountEl.textContent = `${playlist.length}首歌曲`;
+      
+      loadSong(0);
+      showPlayer();
+    } catch (error) {
+      console.error('搜索出错:', error);
+      showError('搜索失败，请稍后再试');
+    }
+  }
 
 // 添加时间更新监听器以更新歌词
 audioPlayerEl.addEventListener('timeupdate', () => {
