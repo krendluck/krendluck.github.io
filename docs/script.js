@@ -628,7 +628,7 @@ async function loadPlaylistFromNotion(tag = '') {
       playerEl.style.display = 'none';
       loadingEl.style.display = 'block';
       
-      const apiUrl = 'https://your-vercel-app.vercel.app/api/music';
+      const apiUrl = 'https://notion-music-api.vercel.app/api/music';
       const response = await fetch(`${apiUrl}?search=${encodeURIComponent(query)}`);
       
       if (!response.ok) {
