@@ -29,6 +29,9 @@ const searchTitleEl = document.getElementById('search-title');
 const searchCountEl = document.getElementById('search-count');
 const searchListEl = document.getElementById('search-list');
 const backToSearchButtonEl = document.getElementById('backToSearchButton');
+const searchInputEl = document.getElementById('search-input');
+const searchButtonEl = document.getElementById('search-button');
+
 const apiUrl = 'https://notion-music-api.vercel.app/api/music';
 const updateApiUrl = 'https://notion-music-api.vercel.app/api/update'; // 用于更新链接的API端点
 
@@ -41,7 +44,7 @@ function logDebug(message) {
 // 初始化播放器
 async function initPlayer() {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     searchResultsEl.style.display = 'none';
     playerEl.style.display = 'none';
     loadingEl.style.display = 'block';
@@ -767,6 +770,14 @@ async function loadPlaylistFromNotion(tag = '') {
         // 显示搜索结果区域
         loadingEl.style.display = 'none';
         searchResultsEl.style.display = 'block';
+
+        // 清空搜索框，方便下次搜索
+        if (searchInputEl) {
+            searchInputEl.value = '';
+        }
+        
+        // 添加历史记录
+        addSearchHistory(query);
     } catch (error) {
         console.error('搜索出错:', error);
         showError('搜索失败，请稍后再试');
@@ -774,9 +785,47 @@ async function loadPlaylistFromNotion(tag = '') {
     }
 }
 
+// 搜索历史记录功能
+function addSearchHistory(query) {
+    try {
+        let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+        
+        // 移除重复项
+        history = history.filter(item => item !== query);
+        
+        // 添加到开头
+        history.unshift(query);
+        
+        // 限制最多保存10条
+        if (history.length > 10) {
+            history = history.slice(0, 10);
+        }
+        
+        localStorage.setItem('searchHistory', JSON.stringify(history));
+        
+    } catch (e) {
+        console.error('保存搜索历史失败', e);
+    }
+}
+
 function renderSearchResults(songs) {
     // 清空列表
     searchListEl.innerHTML = '';
+    
+    // 添加返回按钮
+    const header = document.createElement('div');
+    header.className = 'search-header';
+    
+    const backButton = document.createElement('button');
+    backButton.className = 'back-button';
+    backButton.textContent = '返回播放器';
+    backButton.addEventListener('click', () => {
+        searchResultsEl.style.display = 'none';
+        playerEl.style.display = 'block';
+    });
+    
+    header.appendChild(backButton);
+    searchListEl.appendChild(header);
     
     // 为每首歌创建列表项
     songs.forEach((song, index) => {
@@ -883,5 +932,56 @@ volumeSliderEl.addEventListener('input', function() {
     savePlayerState(); // 保存设置
 });
 volumeButtonEl.addEventListener('click', toggleMute);
+
+// 添加搜索按钮事件监听
+searchButtonEl.addEventListener('click', () => {
+    const query = searchInputEl.value.trim();
+    if (query) {
+        searchSongs(query);
+    }
+});
+
+// 添加搜索框回车键事件监听
+searchInputEl.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const query = searchInputEl.value.trim();
+        if (query) {
+            searchSongs(query);
+        }
+    }
+});
+
+backToSearchButtonEl.addEventListener('click', () => {
+    playerEl.style.display = 'none';
+    searchResultsEl.style.display = 'block';
+    
+    // 高亮显示当前播放的歌曲
+    const items = searchListEl.querySelectorAll('.song-item');
+    items.forEach(item => item.classList.remove('active'));
+    
+    const currentItem = searchListEl.querySelector(`[data-index="${currentIndex}"]`);
+    if (currentItem) {
+        currentItem.classList.add('active');
+        // 平滑滚动到当前项
+        currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+
+document.getElementById('searchButton').addEventListener('click', function() {
+    const query = document.getElementById('search-input').value;
+    if (query.trim()) {
+      searchSongs(query);
+    }
+  });
+  
+  document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      const query = this.value;
+      if (query.trim()) {
+        searchSongs(query);
+      }
+    }
+  });
+
 // 初始化
 window.addEventListener('load', initPlayer);
