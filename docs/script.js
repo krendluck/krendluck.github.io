@@ -198,26 +198,6 @@ function preloadAdjacentSongs(index) {
     }
 }
 
-// 从JSON文件加载播放列表
-async function loadPlaylistFromJson(playlistId) {
-    const response = await fetch(`./playlists/${playlistId}.json`);
-    if (!response.ok) {
-        throw new Error(`播放列表加载失败: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    playlist = data.songs || [];
-    
-    if (playlist.length === 0) {
-        throw new Error('播放列表为空');
-    }
-    
-    playlistNameEl.textContent = data.name || '播放列表';
-    songCountEl.textContent = `${playlist.length}首歌曲`;
-    
-    loadSong(0);
-    showPlayer();
-}
 
 // 加载指定索引的歌曲
 function loadSong(index) {
