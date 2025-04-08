@@ -196,6 +196,10 @@ export function loadSong(index) {
     // 加载歌词
     state.updateLyrics([]);
     state.updateCurrentLyricIndex(-1);
+
+    // 重置歌词滚动状态 (确保添加这行)
+    if (typeof userScrolled !== 'undefined') userScrolled = false;
+    
     loadLyrics(song.lrc);
     
     // 尝试播放
