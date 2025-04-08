@@ -1,0 +1,32 @@
+/* 歌词样式 */
+.lyrics-container {
+    flex: 1;
+    overflow-y: auto;
+    margin: 10px 0;
+    padding: 5px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.8);
+    font-size: 14px;
+    max-height: 120px;
+    scroll-behavior: smooth;
+}
+
+.lyrics-line {
+    padding: 2px 0;
+    color: #666;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.lyrics-line.active {
+    color: #000;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.lyrics-placeholder {
+    text-align: center;
+    color: #999;
+    padding: 10px;
+}
