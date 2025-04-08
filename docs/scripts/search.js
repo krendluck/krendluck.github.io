@@ -63,10 +63,7 @@ export function renderSearchResults(songs) {
     // 清空列表
     dom.searchListEl.innerHTML = '';
     
-    // 添加返回按钮
-    const header = document.createElement('div');
-    header.className = 'search-header';
-    
+    // 添加返回按钮   
     const backButton = document.createElement('button');
     backButton.className = 'back-button';
     backButton.textContent = '返回播放器';
@@ -75,8 +72,7 @@ export function renderSearchResults(songs) {
         dom.playerEl.style.display = 'block';
     });
     
-    header.appendChild(backButton);
-    dom.searchListEl.appendChild(header);
+    dom.searchCountEl.after(backButton);
     
     // 为每首歌创建列表项
     songs.forEach((song, index) => {

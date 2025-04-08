@@ -91,18 +91,27 @@
     margin-left: 20px;
 }
 
+.search-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+  }
+  
+  .results-count {
+    font-size: 14px;
+    color: #666;
+  }
+
 .back-button {
-    padding: 8px 15px;
-    margin-right: 10px;
+    padding: 6px 12px;
     background: #f1f1f1;
     border: none;
-    border-radius: 20px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    transition: background 0.2s;
-}
+  }
 
 .back-button:hover {
     background: #e0e0e0;
