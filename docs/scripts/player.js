@@ -281,8 +281,7 @@ export function playNext() {
     
     // 如果下一首歌已预加载
     if (dom.nextAudioPlayerEl.src && dom.nextAudioPlayerEl.readyState >= 2) {
-        // 保存当前播放状态
-        const wasPlaying = !dom.audioPlayerEl.paused;
+
         
         // 交换音频元素
         const currentSrc = dom.audioPlayerEl.src;
@@ -298,10 +297,16 @@ export function playNext() {
         state.updateCurrentLyricIndex(-1);
         loadLyrics(state.playlist[nextIndex].lrc);
         
-        // 如果之前是播放状态，继续播放
-        if (wasPlaying) {
-            dom.audioPlayerEl.play();
-        }
+        dom.audioPlayerEl.play().catch(e => {
+            console.warn('自动播放被阻止，尝试静音播放', e);
+            // 如果播放被阻止，尝试静音播放，然后恢复音量
+            dom.audioPlayerEl.muted = true;
+            dom.audioPlayerEl.play().then(() => {
+                dom.audioPlayerEl.muted = false;
+            }).catch(err => {
+                console.error('即使静音也无法自动播放:', err);
+            });
+        });
         
         // 更新预加载
         preloadAdjacentSongs(nextIndex);
