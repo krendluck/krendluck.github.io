@@ -2,8 +2,8 @@
 
 import { logDebug } from './utils.js';
 
-export const apiUrl = 'https://notion-music-api.vercel.app/api/music';
-export const updateApiUrl = 'https://notion-music-api.vercel.app/api/update';
+export const apiUrl = 'https://notion-music-api.netlify.app/api/music';
+export const updateApiUrl = 'https://notion-music-api.netlify.app/api/update';
 
 // 处理链接失效
 export async function handleFailedMedia(song, errorType = 'audio') {
