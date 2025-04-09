@@ -7,6 +7,7 @@ import { setVolume, toggleMute } from './volume.js';
 import { savePlayerState } from './storage.js';
 import { searchSongs } from './search.js';
 import { updateCurrentLyrics } from './lyrics.js';
+import { setupAutoRefresh } from './autoRefresh.js';
 
 // 添加事件监听器
 function setupEventListeners() {
@@ -107,6 +108,7 @@ window.addEventListener('load', () => {
     console.log('页面加载，初始化播放器');
     setupEventListeners();
     initPlayer();
+    setupAutoRefresh();
 });
 
 // 防止长时间播放时状态丢失，定期保存

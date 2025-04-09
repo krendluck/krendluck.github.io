@@ -4,6 +4,7 @@ import * as state from './state.js';
 import * as dom from './dom.js';
 import { logDebug } from './utils.js';
 import { savePlayerState } from './storage.js';
+import { ensureValidUrl } from './autoRefresh.js';
 
 // 切换随机播放模式
 export function toggleShuffle() {
@@ -66,7 +67,7 @@ export function createShuffledPlaylist() {
 }
 
 // 预加载相邻歌曲
-export function preloadAdjacentSongs(index) {
+export async function preloadAdjacentSongs(index) {
     let prevIndex, nextIndex;
     
     if (state.isShuffleMode) {
@@ -85,13 +86,19 @@ export function preloadAdjacentSongs(index) {
     
     // 预加载前一首歌
     if (prevIndex !== index && state.playlist[prevIndex]) {
-        dom.prevAudioPlayerEl.src = state.playlist[prevIndex].url;
-        dom.prevAudioPlayerEl.load();
+        const validUrl = await ensureValidUrl(state.playlist[prevIndex]);
+        if (validUrl) {
+            dom.prevAudioPlayerEl.src = validUrl;
+            dom.prevAudioPlayerEl.load();
+        }
     }
     
     // 预加载后一首歌
     if (nextIndex !== index && state.playlist[nextIndex]) {
-        dom.nextAudioPlayerEl.src = state.playlist[nextIndex].url;
-        dom.nextAudioPlayerEl.load();
+        const validUrl = await ensureValidUrl(state.playlist[nextIndex]);
+        if (validUrl) {
+            dom.nextAudioPlayerEl.src = validUrl;
+            dom.nextAudioPlayerEl.load();
+        }
     }
 }
