@@ -5,8 +5,8 @@ import * as dom from './dom.js';
 import { logDebug, showError, showPlayer } from './utils.js';
 import { loadLyrics } from './lyrics.js';
 import { handleFailedMedia, fetchPlaylistFromNotion } from './api.js';
-import { savePlayerState } from './storage.js';
-import { preloadAdjacentSongs } from './shuffle.js';
+import { savePlayerState, loadPlayerState, restorePlayback } from './storage.js';
+import { preloadAdjacentSongs, createShuffledPlaylist } from './shuffle.js';
 import { searchSongs } from './search.js';
 
 // 初始化播放器
@@ -85,7 +85,20 @@ export async function initPlayer() {
     // 默认情况：加载所有歌曲
     console.log('无特定参数，加载全部歌曲');
     try {
-        await loadPlaylistFromNotion();
+        // 检查是否有保存的播放列表标识
+        const savedState = loadPlayerState();
+        
+        // 如果有保存的标签或搜索词，优先使用它们
+        if (savedState && savedState.playlistTag) {
+            console.log(`恢复上次播放列表(标签): ${savedState.playlistTag}`);
+            await loadPlaylistFromNotion(savedState.playlistTag);
+        } else if (savedState && savedState.searchTerm) {
+            console.log(`恢复上次搜索: ${savedState.searchTerm}`);
+            await searchSongs(savedState.searchTerm);
+        } else {
+            // 没有保存的播放列表信息，加载全部歌曲
+            await loadPlaylistFromNotion();
+        }
     } catch (error) {
         console.error('加载所有歌曲失败:', error);
         showError('无法加载音乐库，请稍后再试');
@@ -107,12 +120,21 @@ export async function loadPlaylistFromNotion(tag = '') {
         // 更新状态
         state.updatePlaylist(songs);
         
+        // 保存当前播放列表标识
+        if (tag) {
+            state.updateCurrentPlaylistTag(tag);
+        }
+        
         // 更新 UI
         dom.playlistNameEl.textContent = tag ? `分类: ${tag}` : 'Notion 音乐库';
         dom.songCountEl.textContent = `${songs.length}首歌曲`;
         
-        // 加载第一首歌
-        loadSong(0);
+        // 尝试恢复上次播放状态，如果恢复失败则加载第一首歌
+        const restored = await restorePlayback();
+        if (!restored) {
+            loadSong(0);
+        }
+        
         showPlayer();
         
         // 如果开启了随机播放模式，需要创建随机列表
@@ -131,7 +153,7 @@ export async function loadPlaylistFromNotion(tag = '') {
 }
 
 // 加载指定索引的歌曲
-export function loadSong(index) {
+export function loadSong(index, autoPlay = true) {
     if (index < 0 || index >= state.playlist.length) {
         console.error(`无效索引: ${index}, 播放列表长度: ${state.playlist.length}`);
         return false;
@@ -203,9 +225,12 @@ export function loadSong(index) {
     loadLyrics(song.lrc);
     
     // 尝试播放
-    dom.audioPlayerEl.play().catch(e => console.log('自动播放被浏览器阻止'));
+    if (autoPlay) {
+        dom.audioPlayerEl.play().catch(e => console.log('自动播放被浏览器阻止'));
+    }
     updateBackButton();
-
+    savePlayerState(); // 保存当前状态
+    
     return true;
 }
 

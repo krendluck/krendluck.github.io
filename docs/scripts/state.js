@@ -13,6 +13,11 @@ export let shuffledPlaylist = [];
 export let playbackHistory = [];
 export let currentShuffleIndex = 0;
 
+// 添加播放列表标识状态
+export let currentPlaylistTag = null;
+export let currentSearchTerm = null;
+
+
 // 用于在模块间共享状态更新的函数
 export function updatePlaylist(newPlaylist) {
     playlist = newPlaylist;
@@ -48,4 +53,13 @@ export function updateLyrics(newLyrics) {
 
 export function updateCurrentLyricIndex(index) {
     currentLyricIndex = index;
+}
+
+// 添加更新函数
+export function updateCurrentPlaylistTag(tag) {
+    currentPlaylistTag = tag;
+}
+
+export function updateCurrentSearchTerm(term) {
+    currentSearchTerm = term;
 }
