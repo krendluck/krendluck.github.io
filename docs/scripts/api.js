@@ -17,14 +17,14 @@ export async function handleFailedMedia(song, errorType = 'audio') {
     
     try {
         // 通知服务器链接失效
-        logDebug(`发送更新请求到: ${updateApiUrl}`);
+        logDebug(`发送更新请求到: ${apiUrl}`);
         logDebug(`请求参数:`, {
             songId: song.id,
             errorType: errorType,
             url: errorType === 'audio' ? song.url : song.lrc
         });
         
-        const response = await fetch(updateApiUrl, {
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

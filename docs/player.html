@@ -9,13 +9,15 @@
     <link rel="stylesheet" href="styles/lyrics.css">
     <link rel="stylesheet" href="styles/controls.css">
     <link rel="stylesheet" href="styles/search.css">
+    <link rel="stylesheet" href="styles/browse.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- 搜索区域 - 移至顶部 -->
     <header class="app-header">
         <div class="search-container">
             <input type="text" id="search-input" placeholder="搜索歌曲或歌手...">
-            <button id="search-button">🔍</button>
+            <button id="search-button"><i class="fas fa-search"></i></button>
         </div>
         
         <div class="tags-container" id="tagsContainer">
@@ -35,6 +37,38 @@
                 <div id="search-count"></div>
             </div>
             <div id="search-list" class="song-list"></div>
+        </div>
+        
+        <!-- 歌曲浏览区域 -->
+        <div id="browse-view" class="browse-view" style="display: none;">
+            <div class="browse-header">
+                <h2>音乐库浏览</h2>
+                <div id="browse-count">0首歌曲</div>
+            </div>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label>分类筛选:</label>
+                    <div id="tag-filters" class="tag-container"></div>
+                </div>
+                <div class="sort-group">
+                    <label>排序:</label>
+                    <select id="sort-selector">
+                        <option value="title-asc">按名称 (A-Z)</option>
+                        <option value="title-desc">按名称 (Z-A)</option>
+                        <option value="artist-asc">按歌手 (A-Z)</option>
+                        <option value="artist-desc">按歌手 (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="browse-list" class="song-list"></div>
+            
+            <div class="navigation-buttons">
+                <button id="back-to-player-button" class="control-button">
+                    <i class="fas fa-music"></i> 返回播放器
+                </button>
+            </div>
         </div>
         
         <!-- 播放器区域 -->
@@ -59,18 +93,28 @@
             </div>
             
             <div class="controls">
-                <button class="button" id="prevButton">⏮</button>
-                <button class="button" id="nextButton">⏭</button>
-                <button class="button" id="shuffleButton" title="随机播放">🔀</button>
+                <button class="button" id="prevButton"><i class="fas fa-step-backward"></i></button>
+                <button class="button" id="nextButton"><i class="fas fa-step-forward"></i></button>
+                <button class="button" id="shuffleButton" title="随机播放"><i class="fas fa-random"></i></button>
                 
                 <!-- 音量控制 -->
                 <div class="volume-control">
-                    <button class="button" id="volumeButton" title="音量">🔊</button>
+                    <button class="button" id="volumeButton" title="音量"><i class="fas fa-volume-up"></i></button>
                     <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
                 </div>
                 
-                <!-- 返回搜索结果按钮 -->
-                <button id="backToSearchButton" class="control-button">返回搜索结果</button>
+                <!-- 控制按钮区 -->
+                <div class="control-buttons">
+                    <button id="backToSearchButton" class="control-button">
+                        <i class="fas fa-search"></i> 返回搜索
+                    </button>
+                </div>
+
+                <div class="nav-buttons">
+                    <button id="browse-button" class="nav-button">
+                        <i class="fas fa-list"></i> 浏览全部
+                    </button>
+                </div>
             </div>
         </div>
     </main>

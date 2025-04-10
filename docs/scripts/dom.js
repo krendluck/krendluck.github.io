@@ -39,3 +39,12 @@ export const searchListEl = document.getElementById('search-list');        // �
 export const backToSearchButtonEl = document.getElementById('backToSearchButton'); // 从播放器返回搜索结果的按钮
 export const searchInputEl = document.getElementById('search-input');      // 搜索输入框
 export const searchButtonEl = document.getElementById('search-button');    // 搜索提交按钮
+
+// 歌单浏览相关元素
+export const browseViewEl = document.getElementById('browse-view');
+export const browseListEl = document.getElementById('browse-list');
+export const browseCountEl = document.getElementById('browse-count');
+export const tagFiltersEl = document.getElementById('tag-filters');
+export const sortSelectorEl = document.getElementById('sort-selector');
+export const backToPlayerButtonEl = document.getElementById('back-to-player-button');
+export const browseButtonEl = document.getElementById('browse-button');

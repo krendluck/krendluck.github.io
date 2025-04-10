@@ -8,6 +8,7 @@ import { savePlayerState } from './storage.js';
 import { searchSongs } from './search.js';
 import { updateCurrentLyrics } from './lyrics.js';
 import { setupAutoRefresh } from './autoRefresh.js';
+import { initBrowseFeature } from './browse.js';
 
 // 添加事件监听器
 function setupEventListeners() {
@@ -109,6 +110,7 @@ window.addEventListener('load', () => {
     setupEventListeners();
     initPlayer();
     setupAutoRefresh();
+    initBrowseFeature();
 });
 
 // 防止长时间播放时状态丢失，定期保存
