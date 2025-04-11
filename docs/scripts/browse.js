@@ -51,22 +51,11 @@ export function initBrowseFeature() {
         sortSelectorEl.addEventListener('change', handleSortChange); // Keep internal handler
     }
 
-    // Event listener for the main browse button (likely set in main.js now)
-    // if (browseButtonEl) {
-    //     browseButtonEl.addEventListener('click', showBrowseView); // Use the updated showBrowseView
-    //     logDebug('浏览按钮事件已绑定');
-    // } else {
-    //     logDebug('警告: 未找到浏览按钮');
-    // }
-
-    // Add scroll optimization (keep internal)
-    // if (browseListEl) {
-    //     browseListEl.addEventListener('wheel', handleSmoothScroll, { passive: false });
-    // }
+    // 加载排序偏好
+    loadSortPreference();
 
     logDebug('歌曲浏览功能已初始化');
 }
-
 
 /**
  * Shows the browse view and handles UI changes.
@@ -144,20 +133,15 @@ export function hideBrowseView() {
     if (searchScopeContainer) searchScopeContainer.style.display = 'none';
     if (searchHint) searchHint.style.display = 'none';
 
-
     if (browseViewEl) browseViewEl.style.display = 'none';
 
     // Decide which view to show next (player or search results)
-    // This logic might be better placed in main.js or a dedicated view manager
     if (state.playlist && state.playlist.length > 0 && state.currentIndex !== -1) {
-         // Check if currentIndex is valid
         showPlayer(); // Assumes showPlayer handles displaying the player element
     } else if (dom.searchResultsEl && dom.searchResultsEl.innerHTML.trim() !== '') {
-         // Check if search results exist
         if (dom.searchResultsEl) dom.searchResultsEl.style.display = 'block';
     } else {
-        // Default fallback, maybe show player or a default message
-         showPlayer(); // Or handle appropriately
+        showPlayer(); // Or handle appropriately
     }
 
     logDebug('Browse view hidden.');
@@ -170,28 +154,23 @@ function saveBrowseViewState() {
         browseViewState.scrollPosition = browseListEl.scrollTop;
         logDebug(`Saved browse scroll position: ${browseViewState.scrollPosition}`);
     }
-    // Save other state aspects here (filters, sort) if needed
 }
 
 function restoreBrowseViewState() {
     if (browseListEl) {
-        // Use setTimeout to ensure rendering is complete before scrolling
         setTimeout(() => {
             browseListEl.scrollTop = browseViewState.scrollPosition;
             logDebug(`Restored browse scroll position: ${browseViewState.scrollPosition}`);
-        }, 50); // Small delay
+        }, 50);
     }
-    // Restore other state aspects here
 }
 
 // --- Internal Helper Functions (Keep Private) ---
-
 
 /*
  * Extracts all unique tags from a list of songs.
  */
 function extractAllTags(songs) {
-    // ... (keep existing implementation)
     const tagsSet = new Set();
     songs.forEach(song => {
         if (song.tags && Array.isArray(song.tags)) {
@@ -205,7 +184,6 @@ function extractAllTags(songs) {
  * Renders the tag filter buttons.
  */
 function renderTagFilters(tags) {
-    // ... (keep existing implementation)
     if (!tagFiltersEl) return;
     tagFiltersEl.innerHTML = ''; // Clear existing tags
 
@@ -238,7 +216,6 @@ function renderTagFilters(tags) {
  * Updates the visual state of tag filter buttons.
  */
 function updateTagFiltersUI() {
-    // ... (keep existing implementation)
     if (!tagFiltersEl) return;
     const tagElements = tagFiltersEl.querySelectorAll('.tag-filter');
     tagElements.forEach(el => {
@@ -256,7 +233,34 @@ function updateTagFiltersUI() {
  */
 function handleSortChange(e) {
     currentSort = e.target.value;
+    logDebug(`排序方式已更改为: ${currentSort}`);
+    
+    // 保存排序偏好到本地存储
+    try {
+        localStorage.setItem('musicPlayerSortPreference', currentSort);
+    } catch (err) {
+        console.error('无法保存排序偏好:', err);
+    }
+    
     applyFilterAndSort();
+}
+
+// 初始化时加载排序偏好
+export function loadSortPreference() {
+    try {
+        const savedSort = localStorage.getItem('musicPlayerSortPreference');
+        if (savedSort) {
+            currentSort = savedSort;
+            logDebug(`从本地存储加载排序偏好: ${currentSort}`);
+            
+            // 更新排序选择器UI
+            if (sortSelectorEl) {
+                sortSelectorEl.value = currentSort;
+            }
+        }
+    } catch (err) {
+        console.error('无法加载排序偏好:', err);
+    }
 }
 
 /**
@@ -264,82 +268,77 @@ function handleSortChange(e) {
  */
 function applyFilterAndSort() {
     logDebug(`Applying filter: ${activeTag || 'All'}, Sort: ${currentSort}`);
-    // Filter songs based on activeTag
     if (activeTag === null) {
-        filteredSongs = [...allSongs]; // Use a copy
+        filteredSongs = [...allSongs];
     } else {
         filteredSongs = allSongs.filter(song =>
             song.tags && Array.isArray(song.tags) && song.tags.includes(activeTag)
         );
     }
 
-    // Sort the filtered songs
-    sortSongs(filteredSongs, currentSort); // Keep internal sorting
+    sortSongs(filteredSongs, currentSort);
 
-    // Render the list
-    renderSongList(filteredSongs); // Keep internal rendering
+    renderSongList(filteredSongs);
 
-    // Update count display
     if (browseCountEl) browseCountEl.textContent = `${filteredSongs.length}首歌曲`;
 }
-
 
 /**
  * Sorts an array of songs based on the specified criteria.
  */
 function sortSongs(songs, sortBy) {
-    // ... (keep existing implementation)
+    if (!sortBy || !sortBy.includes('-')) {
+        console.error('无效的排序参数:', sortBy);
+        return;
+    }
+
     const [field, direction] = sortBy.split('-');
     const multiplier = direction === 'asc' ? 1 : -1;
 
+    logDebug(`正在按 ${field} ${direction === 'asc' ? '升序' : '降序'} 排序`);
+
     songs.sort((a, b) => {
-        let valueA = '', valueB = ''; // Default to empty string
+        let valueA = '', valueB = '';
 
         if (field === 'title') {
-            valueA = a.title || '';
-            valueB = b.title || '';
+            valueA = String(a.title || '').toLowerCase();
+            valueB = String(b.title || '').toLowerCase();
         } else if (field === 'artist') {
-            valueA = a.artist || '';
-            valueB = b.artist || '';
+            valueA = String(a.artist || '').toLowerCase();
+            valueB = String(b.artist || '').toLowerCase();
+        } else {
+            valueA = String(a.title || '').toLowerCase();
+            valueB = String(b.title || '').toLowerCase();
         }
-        // Add more sort fields if needed
 
-        // Handle potential undefined values during comparison
-        if (valueA === valueB) return 0;
-        if (valueA < valueB) return -1 * multiplier;
-        return 1 * multiplier;
-        // return multiplier * valueA.localeCompare(valueB); // localeCompare might be safer
+        return multiplier * valueA.localeCompare(valueB, 'zh-CN');
     });
-}
 
+    logDebug(`排序完成，共 ${songs.length} 首歌曲`);
+}
 
 /**
  * Renders the song list in the browse view. Exporting for potential external use if needed.
  */
 export function renderSongList(songs) {
-    // ... (keep most of the existing implementation, ensure it uses browseListEl)
     if (!browseListEl) return;
-    browseListEl.innerHTML = ''; // Clear list
+    browseListEl.innerHTML = '';
 
-    // Add songs
     songs.forEach((song, index) => {
         const songEl = document.createElement('div');
-        songEl.className = 'song-card'; // Use existing class
-        // Use the song's unique ID if available, otherwise fall back to index
+        songEl.className = 'song-card';
         songEl.dataset.id = song.id || `browse-idx-${index}`;
-        songEl.dataset.index = index; // Keep index for playback logic if needed
+        songEl.dataset.index = index;
 
-        // Check if this song is the currently playing one
         const isCurrentSong = state.playlist && state.playlist.length > 0 &&
                              state.currentIndex >= 0 &&
-                             state.currentIndex < state.playlist.length && // Bounds check
-                             state.playlist[state.currentIndex].id === song.id; // Compare by ID if possible
+                             state.currentIndex < state.playlist.length &&
+                             state.playlist[state.currentIndex].id === song.id;
 
         if (isCurrentSong) {
             songEl.classList.add('active');
         }
 
-        // Build song card HTML (keep existing structure)
         const songContent = `
             <div class="song-info">
                 <div class="song-title">${song.title || '未知标题'}</div>
@@ -357,27 +356,22 @@ export function renderSongList(songs) {
         `;
         songEl.innerHTML = songContent;
 
-        // Add click listener to play the song
         songEl.addEventListener('click', (e) => {
-             // Prevent click if play button itself was clicked (handle separately if needed)
-             if (e.target.closest('.play-button')) return;
-             playSongFromBrowse(index, songs); // Pass the correct list and index
+            if (e.target.closest('.play-button')) return;
+            playSongFromBrowse(index, songs);
         });
 
-         // Add listener for play button specifically if needed
-         const playButton = songEl.querySelector('.play-button');
-         if(playButton) {
-             playButton.addEventListener('click', (e) => {
-                 e.stopPropagation(); // Prevent card click
-                 playSongFromBrowse(index, songs); // Pass the correct list and index
-             });
-         }
-
+        const playButton = songEl.querySelector('.play-button');
+        if (playButton) {
+            playButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                playSongFromBrowse(index, songs);
+            });
+        }
 
         browseListEl.appendChild(songEl);
     });
 
-    // Handle empty list case (keep existing)
     if (songs.length === 0) {
         const emptyMessage = document.createElement('div');
         emptyMessage.className = 'empty-message';
@@ -388,34 +382,15 @@ export function renderSongList(songs) {
         browseListEl.appendChild(emptyMessage);
     }
 
-    // Double-click listener (keep existing, ensure it uses correct index/list)
-    // Consider removing if single click is sufficient
     browseListEl.querySelectorAll('.song-card').forEach((songEl) => {
         songEl.addEventListener('dblclick', () => {
             const idx = parseInt(songEl.dataset.index, 10);
             if (!isNaN(idx)) {
-                 playSongFromBrowse(idx, songs); // Pass the correct list and index
+                playSongFromBrowse(idx, songs);
             }
         });
     });
-
-
-    // Scroll problem fix attempt (keep existing)
-    // setTimeout(() => {
-    //     const list = document.getElementById('browse-list');
-    //     if (!list) return;
-    //     list.style.display = 'none';
-    //     void list.offsetHeight;
-    //     list.style.display = '';
-    //     console.log('列表高度:', list.scrollHeight, '容器高度:', list.clientHeight);
-    //     if (list.scrollHeight > list.clientHeight) {
-    //         console.log('列表应该可以滚动', list.scrollHeight - list.clientHeight, 'px');
-    //     } else {
-    //         console.log('列表内容不足以滚动');
-    //     }
-    // }, 100);
 }
-
 
 /**
  * Plays a song selected from the browse list.
@@ -431,32 +406,22 @@ function playSongFromBrowse(index, currentList) {
     const selectedSong = currentList[index];
     logDebug(`从浏览列表播放: ${selectedSong.title}`);
 
-    // IMPORTANT: Update the main playlist state with the *currently displayed* list
-    state.updatePlaylist(currentList); // Use the list passed as argument
+    state.updatePlaylist(currentList);
 
-    // Load the song using its index *within the new playlist*
-    loadSong(index); // The index now correctly refers to the position in state.playlist
+    loadSong(index);
 
-    // Hide browse view and show player
-    hideBrowseView(); // Use the updated hideBrowseView
-    // showPlayer(); // showPlayer should be called implicitly by loadSong or hideBrowseView logic
-
-    // Update player UI (optional, loadSong might handle this)
-    // dom.playlistNameEl.textContent = activeTag ? `分类: ${activeTag}` : '音乐库';
-    // dom.songCountEl.textContent = `${currentList.length}首歌曲`;
+    hideBrowseView();
 }
-
 
 /**
  * Refreshes the browse view data.
  */
 export async function refreshBrowseView() {
-    // ... (keep existing implementation)
     if (browseViewEl && browseViewEl.style.display !== 'none') {
         logDebug('Refreshing browse view data...');
         try {
-            allSongs = await fetchPlaylistFromNotion(); // Reload all songs
-            applyFilterAndSort(); // Reapply filters and sort
+            allSongs = await fetchPlaylistFromNotion();
+            applyFilterAndSort();
             logDebug('Browse view refreshed.');
         } catch (error) {
             console.error('Failed to refresh browse view:', error);
@@ -464,7 +429,6 @@ export async function refreshBrowseView() {
         }
     }
 }
-
 
 /**
  * Filters the currently displayed browse list based on a search term.
@@ -475,25 +439,20 @@ export function filterCurrentBrowseList(searchTerm) {
     searchTerm = searchTerm.toLowerCase().trim();
     logDebug(`Filtering browse list with term: "${searchTerm}"`);
 
-    // Base for filtering is the list already filtered by tags and sorted
     let baseList = [];
     if (activeTag === null) {
-        baseList = [...allSongs]; // Start with all songs if no tag filter
+        baseList = [...allSongs];
     } else {
         baseList = allSongs.filter(song =>
             song.tags && Array.isArray(song.tags) && song.tags.includes(activeTag)
         );
     }
-    // Apply current sort to the base list
     sortSongs(baseList, currentSort);
-
 
     let results;
     if (!searchTerm) {
-        // If search term is empty, show the base list (tag filtered + sorted)
         results = baseList;
     } else {
-        // Filter the base list by the search term
         results = baseList.filter(song => {
             const titleMatch = song.title && song.title.toLowerCase().includes(searchTerm);
             const artistMatch = song.artist && song.artist.toLowerCase().includes(searchTerm);
@@ -501,16 +460,11 @@ export function filterCurrentBrowseList(searchTerm) {
         });
     }
 
-    // Render the filtered results
     renderSongList(results);
     if (browseCountEl) browseCountEl.textContent = `${results.length}首歌曲`;
 }
 
 // --- Helper to save player state (placeholder) ---
 function savePlayerStateBeforeBrowse() {
-    // Placeholder: Implement logic if needed to save volume, shuffle state, etc.
-    // before navigating away from the player to the browse view.
     logDebug("Placeholder: Saving player state before browsing.");
 }
-
-// Ensure initBrowseFeature is called somewhere in main.js or app initialization
