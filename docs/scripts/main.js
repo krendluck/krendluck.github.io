@@ -11,6 +11,10 @@ import { updateCurrentLyrics } from './lyrics.js';
 import { setupAutoRefresh } from './autoRefresh.js';
 // Import browse functions needed here
 import { initBrowseFeature, showBrowseView } from './browse.js';
+// Import new features
+import { initKeyboardControls } from './keyboardControls.js';
+import { initMediaSession } from './mediaSession.js';
+import { initRepeatMode } from './repeatMode.js';
 
 // 添加事件监听器
 function setupEventListeners() {
@@ -126,9 +130,15 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded and parsed. Initializing application...');
     try {
         initPlayer(); // Initialize player core first
-        initBrowseFeature(); // Initialize browse feature (gets elements, sets internal listeners)
-        setupEventListeners(); // Setup main event listeners that connect modules
+        initBrowseFeature(); // Initialize browse feature
+        setupEventListeners(); // Setup main event listeners
         setupAutoRefresh(); // Setup auto-refresh if needed
+        
+        // Initialize new features
+        initKeyboardControls();
+        initMediaSession();
+        initRepeatMode();
+        
         console.log('Application initialized successfully.');
     } catch (error) {
         console.error("Initialization failed:", error);

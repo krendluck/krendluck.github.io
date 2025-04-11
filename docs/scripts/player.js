@@ -9,6 +9,8 @@ import { savePlayerState, loadPlayerState, restorePlayback } from './storage.js'
 import { preloadAdjacentSongs, createShuffledPlaylist } from './shuffle.js';
 // Import the correct search handler
 import { handleMainSearch } from './search.js';
+// Import repeat mode constants
+import { REPEAT_MODE, getCurrentRepeatMode } from './repeatMode.js';
 
 // 初始化播放器
 export async function initPlayer() {

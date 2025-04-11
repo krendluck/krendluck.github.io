@@ -13,6 +13,7 @@ export function toggleShuffle() {
     if (state.isShuffleMode) {
         // 激活随机播放
         dom.shuffleButtonEl.classList.add('active');
+        dom.shuffleButtonEl.style.color = '#8a2be2'; // Use purple for active shuffle
         logDebug('随机播放模式已开启');
         
         // 创建随机播放列表
@@ -33,6 +34,7 @@ export function toggleShuffle() {
     } else {
         // 取消随机播放
         dom.shuffleButtonEl.classList.remove('active');
+        dom.shuffleButtonEl.style.color = ''; // Reset color to default
         logDebug('随机播放模式已关闭');
     }
     
