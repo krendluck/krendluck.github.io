@@ -1,0 +1,321 @@
+/* Mobile optimizations for Notion音乐播放器 */
+
+/* Base responsive rules */
+html {
+    touch-action: manipulation; /* Disable double-tap to zoom on mobile */
+}
+@media (max-width: 768px) {
+    body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .main-content {
+        height: auto;
+        min-height: calc(100vh - 120px);
+    }
+    
+    /* Improved search container */
+    .search-container {
+        padding: 0 10px;
+        flex-wrap: wrap;
+    }
+    
+    #search-input, #search-button {
+        height: 40px; /* Larger touch target */
+    }
+    
+    .search-scope {
+        margin-top: 5px;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Make player container more flexible */
+    .player {
+        height: auto;
+        min-height: 300px;
+        padding: 12px;
+    }
+    
+    /* Lyrics container more flexible */
+    #lyrics-container {
+        max-height: 100px;
+    }
+    
+    /* Improve controls layout */
+    .controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .button {
+        width: 44px;  /* Larger touch target */
+        height: 44px;
+    }
+    
+    .volume-control {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    #volumeSlider {
+        width: 120px;
+    }
+    
+    .control-buttons, .nav-buttons {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    /* Browse view improvements */
+    .browse-view {
+        padding: 10px;
+        height: auto;
+        min-height: calc(100vh - 120px);
+    }
+    
+    .filters {
+        padding: 10px;
+    }
+    
+    .filter-group, .sort-group {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    #browse-list {
+        max-height: none;
+        height: auto;
+        min-height: 50vh;
+    }
+    
+    /* Song items in lists */
+    .song-item {
+        padding: 15px 10px;
+    }
+    
+    /* Tag containers */
+    .tag-container {
+        justify-content: center;
+    }
+    
+    .tags-container {
+        padding: 0 10px;
+    }
+}
+
+/* Extremely small screens */
+@media (max-width: 480px) {
+    #search-input {
+        font-size: 14px;
+    }
+    
+    .song-title {
+        font-size: 15px;
+    }
+    
+    .song-artist {
+        font-size: 13px;
+    }
+    
+    .button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .control-button, .nav-button {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    
+    /* Fix audio player display */
+    audio {
+        height: 30px;
+    }
+    
+    #lyrics-container {
+        max-height: 80px;
+        font-size: 13px;
+    }
+    
+    .lyrics-line.active {
+        font-size: 14px;
+    }
+    
+    /* Improve song count and playlist info display */
+    .playlist-info, .song-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .song-count, .song-index {
+        margin-top: 2px;
+    }
+}
+
+/* Fix touch target sizes for better mobile interaction */
+@media (hover: none) and (pointer: coarse) {
+    .button, .control-button, .nav-button, #search-button {
+        /* Minimum 44x44px per Apple's guidelines for touch targets */
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Add tap highlight feedback */
+    .song-item:active, .button:active, .control-button:active, .nav-button:active {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Fix scrolling issues on mobile */
+    #search-list, #browse-list, #lyrics-container {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Touch feedback for buttons */
+.touch-active {
+    opacity: 0.7 !important;
+    transform: scale(0.95) !important;
+    transition: transform 0.1s, opacity 0.1s !important;
+}
+
+/* Mobile audio controls */
+.mobile-audio-player {
+    height: 40px !important;
+    cursor: pointer;
+}
+
+/* Touch optimized elements */
+.touch-optimized {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Swipe feedback animation */
+.swipe-feedback {
+    animation: fadeInOut 0.8s ease-in-out;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-50%) scale(0.8); }
+    20% { opacity: 1; transform: translateY(-50%) scale(1); }
+    80% { opacity: 1; transform: translateY(-50%) scale(1); }
+    100% { opacity: 0; transform: translateY(-50%) scale(0.8); }
+}
+
+/* Portrait orientation adjustments */
+@media (max-width: 768px) and (orientation: portrait) {
+    .player {
+        padding-bottom: 20px;
+    }
+    
+    /* Stack controls for better portrait layout */
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .button {
+        margin-bottom: 5px;
+    }
+}
+
+/* Mobile device specific behaviors */
+body.mobile-device {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body.mobile-device .main-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: calc(100% - 60px);
+    width: 100%;
+    position: absolute;
+    top: 60px;
+    left: 0;
+}
+
+/* Better tap highlight for mobile */
+@media (hover: none) {
+    .song-item:active, 
+    .button:active, 
+    .control-button:active, 
+    .nav-button:active {
+        background-color: rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* Add larger touch areas for small buttons */
+    .button::before,
+    .control-button::before,
+    .nav-button::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        z-index: -1;
+    }
+
+    /* Remove hover states that don't work well on touch */
+    .button:hover,
+    .control-button:hover,
+    .nav-button:hover,
+    .song-item:hover {
+        background: inherit;
+        transform: none;
+    }
+
+    /* Make audio controls more touch-friendly */
+    audio::-webkit-media-controls-panel {
+        padding: 0 5px;
+    }
+    
+    audio::-webkit-media-controls-play-button,
+    audio::-webkit-media-controls-mute-button {
+        min-width: 35px;
+        min-height: 35px;
+    }
+}
+    
+
+/* Landscape orientation optimizations */
+@media (max-width: 900px) and (orientation: landscape) {
+    body {
+        height: auto;
+    }
+    
+    .player {
+        height: auto;
+    }
+    
+    /* Optimize controls layout for landscape */
+    .controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    /* Reduce padding to maximize space */
+    .main-content {
+        padding: 5px;
+    }
+    
+    #lyrics-container {
+        max-height: 60px;
+    }
+}

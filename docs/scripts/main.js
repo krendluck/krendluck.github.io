@@ -15,6 +15,8 @@ import { initBrowseFeature, showBrowseView } from './browse.js';
 import { initKeyboardControls } from './keyboardControls.js';
 import { initMediaSession } from './mediaSession.js';
 import { initRepeatMode } from './repeatMode.js';
+// Import touch events for mobile optimization
+import { initTouchEvents, addDoubleTapPlayPause } from './touchEvents.js';
 
 // 添加事件监听器
 function setupEventListeners() {
@@ -139,6 +141,24 @@ document.addEventListener('DOMContentLoaded', () => {
         initMediaSession();
         initRepeatMode();
         
+        // Initialize mobile touch events
+        if (isMobileDevice()) {
+            console.log('Initializing mobile touch events...');
+            const playerControls = {
+                next: playNext,
+                previous: playPrevious,
+                togglePlay: function() {
+                    if (dom.audioPlayerEl.paused) {
+                        dom.audioPlayerEl.play().catch(e => console.warn('播放被阻止:', e));
+                    } else {
+                        dom.audioPlayerEl.pause();
+                    }
+                }
+            };
+            initTouchEvents(playerControls);
+            addDoubleTapPlayPause(playerControls);
+        }
+        
         console.log('Application initialized successfully.');
     } catch (error) {
         console.error("Initialization failed:", error);
@@ -203,3 +223,9 @@ document.addEventListener('visibilitychange', () => {
 
 // Start periodic save initially
 startPeriodicSave();
+
+// Helper function to detect mobile devices
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           window.matchMedia('(max-width: 768px)').matches;
+}

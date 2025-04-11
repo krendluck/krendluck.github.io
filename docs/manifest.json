@@ -1,0 +1,35 @@
+{
+  "name": "Notion音乐播放器",
+  "short_name": "音乐播放器",
+  "description": "A music player for Notion with mobile-optimized interface",
+  "start_url": "player.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4285f4",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.example.musicplayer",
+      "id": "com.example.musicplayer"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/example-music-player/id1234567890"
+    }
+  ]
+}
