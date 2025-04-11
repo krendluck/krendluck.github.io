@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /scripts/
+Disallow: /styles/
+
+# Allow specific files needed for SEO
+Allow: /index.html
+Allow: /player.html

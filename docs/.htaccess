@@ -1,0 +1,14 @@
+# Prevent direct access to CSS and JS files
+<FilesMatch "\.(css|js)$">
+  # Only allow the file to be accessed if it's being requested by the site itself
+  SetEnvIf Referer "^https?://(www\.)?krendluck\.github\.io/" local_ref=1
+  Order Allow,Deny
+  Allow from env=local_ref
+</FilesMatch>
+
+# Return a 403 Forbidden status for direct access attempts
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_REFERER} !^https?://(www\.)?krendluck\.github\.io/ [NC]
+  RewriteRule \.(css|js)$ - [F,L]
+</IfModule>
