@@ -7,7 +7,8 @@ import { loadLyrics } from './lyrics.js';
 import { handleFailedMedia, fetchPlaylistFromNotion } from './api.js';
 import { savePlayerState, loadPlayerState, restorePlayback } from './storage.js';
 import { preloadAdjacentSongs, createShuffledPlaylist } from './shuffle.js';
-import { searchSongs } from './search.js';
+// Import the correct search handler
+import { handleMainSearch } from './search.js';
 
 // 初始化播放器
 export async function initPlayer() {
@@ -29,18 +30,27 @@ export async function initPlayer() {
     if (notionSearch) {
         console.log(`检测到搜索参数: "${notionSearch}", 开始搜索...`);
         try {
-            await searchSongs(notionSearch);
+            // Use the new search handler
+            await handleMainSearch(notionSearch);
             return;
         } catch (error) {
-            console.error('搜索失败:', error);
-            // 失败后尝试加载全部歌曲
+            // handleMainSearch might throw if the API call fails, ensure proper handling
+            console.error('Initial search failed:', error);
+            // Fallback: try loading default playlist
             try {
-                await loadPlaylistFromNotion();
-                return;
+                console.log('Search failed, attempting to load default playlist...');
+                await loadPlaylistFromNotion(); // Assumes this loads the default list
+                // If default load succeeds, we might not need to return immediately,
+                // let the rest of initPlayer continue if necessary.
             } catch (e) {
-                console.error('默认加载失败:', e);
+                console.error('Default playlist load failed after search failure:', e);
+                showError('无法加载音乐库'); // Show error if fallback also fails
+                // Potentially stop further execution if critical
+                return;
             }
+            // If search failed but default load succeeded, continue initialization if needed
         }
+        // If search succeeded, the function returns above.
     }
 
     // 处理标签过滤请求
@@ -94,9 +104,11 @@ export async function initPlayer() {
             await loadPlaylistFromNotion(savedState.playlistTag);
         } else if (savedState && savedState.searchTerm) {
             console.log(`恢复上次搜索: ${savedState.searchTerm}`);
-            await searchSongs(savedState.searchTerm);
+            // Use the new search handler to restore search state
+            await handleMainSearch(savedState.searchTerm);
         } else {
-            // 没有保存的播放列表信息，加载全部歌曲
+            // No saved playlist info, load default (all songs)
+            console.log('No saved state found, loading default playlist.');
             await loadPlaylistFromNotion();
         }
     } catch (error) {

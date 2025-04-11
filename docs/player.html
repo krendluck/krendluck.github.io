@@ -18,7 +18,16 @@
         <div class="search-container">
             <input type="text" id="search-input" placeholder="搜索歌曲或歌手...">
             <button id="search-button"><i class="fas fa-search"></i></button>
+            <!-- Add search scope toggle, initially hidden -->
+            <div class="search-scope" id="searchScopeContainer" style="display: none; margin-left: 10px; font-size: 0.9em; align-items: center; display: flex;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="searchGlobalCheckbox" style="margin-right: 5px;">
+                    搜索全部歌曲
+                </label>
+            </div>
         </div>
+        <!-- Add search hint, initially hidden -->
+        <div class="search-hint" id="searchHint" style="display: none; font-size: 12px; color: #666; text-align: center; padding: 4px 0;"></div>
         
         <div class="tags-container" id="tagsContainer">
             <!-- 标签将由 JavaScript 动态生成 -->
@@ -47,10 +56,7 @@
             </div>
             
             <div class="filters">
-                <div class="search-in-browse">
-                    <input type="text" id="browse-search" placeholder="在当前列表中搜索...">
-                    <button id="browse-search-button"><i class="fas fa-search"></i></button>
-                </div>
+                <!-- Removed the search-in-browse div -->
                 <div class="filter-group">
                     <label>分类筛选:</label>
                     <div id="tag-filters" class="tag-container"></div>

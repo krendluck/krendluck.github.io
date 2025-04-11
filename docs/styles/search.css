@@ -150,6 +150,8 @@
     color: #666;
     font-size: 0.9em;
     margin-left: 0; /* 移除左边距 */
+    display: block; /* 确保显示 */
+    font-weight: normal;
 }
 
 /* 为最后一个歌曲项目移除底部边框 */
@@ -173,4 +175,53 @@
 .search-results-container {
     /* 左右边距适当缩小，上下保持不变 */
     padding: 0 5px;
+}
+
+/* Styles for browse mode search */
+.browse-mode .search-container {
+    /* Add subtle visual cue */
+    background-color: #f8f9fa; /* Light background */
+    border: 1px dashed #ced4da; /* Dashed border */
+    border-radius: 24px; /* Match input/button radius */
+    padding: 5px 10px; /* Adjust padding */
+    margin-bottom: 5px; /* Reduce bottom margin */
+    transition: all 0.3s ease;
+}
+
+.browse-mode #searchScopeContainer {
+    display: flex !important; /* Ensure it's visible in browse mode */
+}
+
+.browse-mode #searchHint {
+    display: block !important; /* Ensure hint is visible in browse mode */
+}
+
+/* Style for the search scope checkbox container */
+.search-scope {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.search-scope label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.search-scope input[type="checkbox"] {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+/* Style for the search hint text */
+.search-hint {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    padding: 4px 0;
+    margin-top: -10px; /* Adjust position */
+    margin-bottom: 10px;
 }

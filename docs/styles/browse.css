@@ -41,13 +41,20 @@ body.browse-mode {
 
 .filter-group, .sort-group {
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-group label {
+    margin-right: 10px;
+    white-space: nowrap;
 }
 
 .tag-container {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 8px;
 }
 
 .tag-filter {
@@ -101,6 +108,9 @@ body.browse-mode {
     font-size: 0.9em;
     margin-bottom: 6px;
     color: rgba(255, 255, 255, 0.8);
+    display: block; /* 确保显示 */
+    font-style: italic; /* 斜体以区分标题 */
+    font-weight: normal;
 }
 
 .song-tags {
