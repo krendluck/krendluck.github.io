@@ -173,6 +173,9 @@ export function loadSong(index, autoPlay = true) {
         return false;
     }
     
+    // 保存当前歌曲的状态以便判断是否真的改变了歌曲
+    const previousIndex = state.currentIndex;
+    
     const song = state.playlist[index];
     console.log(`加载歌曲: ${song.title}, 索引: ${index}`);
     console.log(`歌曲URL: ${song.url || '无URL'}`);
@@ -194,6 +197,19 @@ export function loadSong(index, autoPlay = true) {
     dom.songTitleEl.title = `${title} - ${artist}`;
     
     dom.songIndexEl.textContent = `${index + 1}/${state.playlist.length}`;
+    
+    // 更新歌曲前先清除所有相关状态
+    if (previousIndex !== index) {
+        // 重置歌词状态
+        state.updateLyrics([]);
+        state.updateCurrentLyricIndex(-1);
+        
+        // 重置歌词容器
+        const lyricsContainer = document.getElementById('lyrics-container');
+        if (lyricsContainer) {
+            lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
+        }
+    }
     
     // 设置当前歌曲
     dom.audioPlayerEl.src = song.url;
@@ -237,14 +253,25 @@ export function loadSong(index, autoPlay = true) {
     // 预加载相邻歌曲
     preloadAdjacentSongs(index);
     
-    // 加载歌词
-    state.updateLyrics([]);
-    state.updateCurrentLyricIndex(-1);
-
-    // 重置歌词滚动状态 (确保添加这行)
+    // 重置歌词滚动状态
     if (typeof userScrolled !== 'undefined') userScrolled = false;
     
-    loadLyrics(song.lrc);
+    // 确保在歌曲加载完成后再加载歌词
+    if (song.lrc) {
+        // 使用延时确保歌曲索引更新后再加载歌词
+        setTimeout(() => {
+            // 确认当前索引未变化后再加载歌词
+            if (state.currentIndex === index) {
+                loadLyrics(song.lrc);
+            }
+        }, 100);
+    } else {
+        // 无歌词的情况
+        const lyricsContainer = document.getElementById('lyrics-container');
+        if (lyricsContainer) {
+            lyricsContainer.innerHTML = '<div class="lyrics-placeholder">暂无歌词</div>';
+        }
+    }
     
     // 尝试播放
     if (autoPlay) {
@@ -275,13 +302,16 @@ export function playPrevious() {
         prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
     }
     
-    // 如果前一首歌已预加载
+    // 彻底清除歌词状态
+    state.updateLyrics([]);
+    state.updateCurrentLyricIndex(-1);
+    
+    // 如果前一首歌已预加载并有效
     if (dom.prevAudioPlayerEl.src && dom.prevAudioPlayerEl.readyState >= 2) {
         // 保存当前播放状态
         const wasPlaying = !dom.audioPlayerEl.paused;
         
         // 交换音频元素
-        const currentSrc = dom.audioPlayerEl.src;
         dom.audioPlayerEl.src = dom.prevAudioPlayerEl.src;
         
         // 更新UI
@@ -297,14 +327,22 @@ export function playPrevious() {
         dom.songIndexEl.textContent = `${prevIndex + 1}/${state.playlist.length}`;
         state.updateCurrentIndex(prevIndex);
         
-        // 加载歌词
-        state.updateLyrics([]);
-        state.updateCurrentLyricIndex(-1);
-        loadLyrics(state.playlist[prevIndex].lrc);
+        // 重置歌词容器
+        const lyricsContainer = document.getElementById('lyrics-container');
+        if (lyricsContainer) {
+            lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
+        }
+        
+        // 确保在更新完所有状态后再加载歌词
+        setTimeout(() => {
+            if (state.currentIndex === prevIndex && state.playlist[prevIndex].lrc) {
+                loadLyrics(state.playlist[prevIndex].lrc);
+            }
+        }, 100);
         
         // 如果之前是播放状态，继续播放
         if (wasPlaying) {
-            dom.audioPlayerEl.play();
+            dom.audioPlayerEl.play().catch(e => console.log('播放失败:', e));
         }
         
         // 更新预加载
@@ -334,12 +372,13 @@ export function playNext() {
         nextIndex = (state.currentIndex + 1) % state.playlist.length;
     }
     
-    // 如果下一首歌已预加载
+    // 彻底清除歌词状态
+    state.updateLyrics([]);
+    state.updateCurrentLyricIndex(-1);
+    
+    // 如果下一首歌已预加载并有效
     if (dom.nextAudioPlayerEl.src && dom.nextAudioPlayerEl.readyState >= 2) {
-
-        
         // 交换音频元素
-        const currentSrc = dom.audioPlayerEl.src;
         dom.audioPlayerEl.src = dom.nextAudioPlayerEl.src;
         
         // 更新UI
@@ -355,10 +394,18 @@ export function playNext() {
         dom.songIndexEl.textContent = `${nextIndex + 1}/${state.playlist.length}`;
         state.updateCurrentIndex(nextIndex);
         
-        // 加载歌词
-        state.updateLyrics([]);
-        state.updateCurrentLyricIndex(-1);
-        loadLyrics(state.playlist[nextIndex].lrc);
+        // 重置歌词容器
+        const lyricsContainer = document.getElementById('lyrics-container');
+        if (lyricsContainer) {
+            lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
+        }
+        
+        // 确保在更新完所有状态后再加载歌词
+        setTimeout(() => {
+            if (state.currentIndex === nextIndex && state.playlist[nextIndex].lrc) {
+                loadLyrics(state.playlist[nextIndex].lrc);
+            }
+        }, 100);
         
         dom.audioPlayerEl.play().catch(e => {
             console.warn('自动播放被阻止，尝试静音播放', e);

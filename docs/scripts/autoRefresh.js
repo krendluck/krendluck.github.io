@@ -211,6 +211,16 @@ export async function ensureValidUrl(song) {
     if (!song || !song.url) return null;
     
     return new Promise((resolve) => {
+        // 如果是当前播放的歌曲，原样返回URL
+        // 这样可以避免在播放时重复验证当前URL，导致播放中断
+        if (window.currentIndex !== undefined && 
+            window.playlist && 
+            window.playlist[window.currentIndex] === song) {
+            logDebug(`当前播放中的歌曲，跳过验证: ${song.title}`);
+            resolve(song.url);
+            return;
+        }
+        
         const testAudio = new Audio();
         let timeoutId;
         let isResolved = false;
@@ -226,12 +236,12 @@ export async function ensureValidUrl(song) {
             testAudio.src = '';
         };
         
-        // 设置超时
+        // 设置超时 - 减少超时时间，避免阻塞太久
         timeoutId = setTimeout(() => {
             logDebug(`URL验证超时: ${song.title}`);
             cleanup();
             resolve(song.url);
-        }, 5000);
+        }, 3000); // 降低到3秒
         
         // 加载成功
         testAudio.oncanplaythrough = () => {
@@ -240,23 +250,42 @@ export async function ensureValidUrl(song) {
             resolve(song.url);
         };
         
-        // 加载失败
+        // 加载失败 - 立即尝试刷新
         testAudio.onerror = async () => {
             logDebug(`URL验证失败，尝试刷新: ${song.title}`);
             cleanup();
             
-            // 尝试获取新URL
-            const newUrl = await refreshMediaUrl(song);
-            if (newUrl) {
-                song.url = newUrl;
-                logDebug(`已更新URL: ${song.title}`);
+            try {
+                // 尝试获取新URL
+                const newUrl = await refreshMediaUrl(song);
+                if (newUrl) {
+                    song.url = newUrl;
+                    logDebug(`已更新URL: ${song.title}`);
+                    
+                    // 验证新URL是否可用
+                    const finalTestAudio = new Audio();
+                    finalTestAudio.src = newUrl;
+                    
+                    // 给新URL一个短时间的验证窗口
+                    setTimeout(() => {
+                        finalTestAudio.src = '';
+                        resolve(newUrl);
+                    }, 1000);
+                } else {
+                    resolve(song.url); // 无法获取新URL，返回原URL
+                }
+            } catch (error) {
+                console.error('刷新URL时出错:', error);
+                resolve(song.url);
             }
-            
-            resolve(newUrl || song.url);
         };
         
-        // 开始加载
-        testAudio.src = song.url;
+        // 开始加载，添加缓存破坏参数
+        const urlWithCacheBuster = song.url.includes('?') 
+            ? `${song.url}&_t=${Date.now()}` 
+            : `${song.url}?_t=${Date.now()}`;
+        
+        testAudio.src = urlWithCacheBuster;
         testAudio.load();
     });
 }
