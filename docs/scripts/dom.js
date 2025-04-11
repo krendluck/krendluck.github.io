@@ -14,7 +14,7 @@ export const playlistNameEl = document.getElementById('playlistName');     // �
 export const songCountEl = document.getElementById('songCount');           // 显示播放列表中的歌曲总数
 
 // 当前歌曲信息元素
-export const songTitleEl = document.getElementById('songTitle');           // 显示当前播放歌曲的标题
+export const songTitleEl = document.getElementById('songTitle');           // 显示当前播放歌曲的标题和歌手
 export const songIndexEl = document.getElementById('songIndex');           // 显示当前歌曲在播放列表中的位置(如 "1/10")
 
 // 音频播放器元素

@@ -32,6 +32,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    position: relative;
 }
 
 .player .song-title {
@@ -40,7 +41,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 85%;
+    max-width: 90%;
+    color: #000;
 }
 
 .song-index {

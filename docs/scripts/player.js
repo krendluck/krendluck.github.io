@@ -182,7 +182,15 @@ export function loadSong(index, autoPlay = true) {
         return false;
     }
     
-    dom.songTitleEl.textContent = song.title || '未知歌曲';
+    const title = song.title || '未知歌曲';
+    const artist = song.artist || '未知歌手';
+    
+    // 将歌曲和歌手信息合并显示
+    dom.songTitleEl.textContent = `${title} - ${artist}`;
+    
+    // Add tooltip to show full info when truncated
+    dom.songTitleEl.title = `${title} - ${artist}`;
+    
     dom.songIndexEl.textContent = `${index + 1}/${state.playlist.length}`;
     
     // 设置当前歌曲
@@ -275,7 +283,15 @@ export function playPrevious() {
         dom.audioPlayerEl.src = dom.prevAudioPlayerEl.src;
         
         // 更新UI
-        dom.songTitleEl.textContent = state.playlist[prevIndex].title || "未知歌曲";
+        const title = state.playlist[prevIndex].title || "未知歌曲";
+        const artist = state.playlist[prevIndex].artist || "未知歌手";
+        
+        // 将歌曲和歌手信息合并显示
+        dom.songTitleEl.textContent = `${title} - ${artist}`;
+        
+        // Add tooltip
+        dom.songTitleEl.title = `${title} - ${artist}`;
+        
         dom.songIndexEl.textContent = `${prevIndex + 1}/${state.playlist.length}`;
         state.updateCurrentIndex(prevIndex);
         
@@ -325,7 +341,15 @@ export function playNext() {
         dom.audioPlayerEl.src = dom.nextAudioPlayerEl.src;
         
         // 更新UI
-        dom.songTitleEl.textContent = state.playlist[nextIndex].title || "未知歌曲";
+        const title = state.playlist[nextIndex].title || "未知歌曲";
+        const artist = state.playlist[nextIndex].artist || "未知歌手";
+        
+        // 将歌曲和歌手信息合并显示
+        dom.songTitleEl.textContent = `${title} - ${artist}`;
+        
+        // Add tooltip
+        dom.songTitleEl.title = `${title} - ${artist}`;
+        
         dom.songIndexEl.textContent = `${nextIndex + 1}/${state.playlist.length}`;
         state.updateCurrentIndex(nextIndex);
         
