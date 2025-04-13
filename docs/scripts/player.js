@@ -302,55 +302,69 @@ export function playPrevious() {
         prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
     }
     
+    // 确保索引有效
+    if (prevIndex < 0 || prevIndex >= state.playlist.length) {
+        console.error(`无效的上一首索引: ${prevIndex}, 播放列表长度: ${state.playlist.length}`);
+        return;
+    }
+    
     // 彻底清除歌词状态
     state.updateLyrics([]);
     state.updateCurrentLyricIndex(-1);
     
+    // 先更新当前索引，确保状态一致
+    state.updateCurrentIndex(prevIndex);
+    
+    // 准备当前歌曲信息
+    const song = state.playlist[prevIndex];
+    const title = song.title || "未知歌曲";
+    const artist = song.artist || "未知歌手";
+    
+    console.log(`播放上一首: ${title} - ${artist}, 索引: ${prevIndex}`);
+    
+    // 更新UI
+    dom.songTitleEl.textContent = `${title} - ${artist}`;
+    dom.songTitleEl.title = `${title} - ${artist}`;
+    dom.songIndexEl.textContent = `${prevIndex + 1}/${state.playlist.length}`;
+    
+    // 重置歌词容器
+    const lyricsContainer = document.getElementById('lyrics-container');
+    if (lyricsContainer) {
+        lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
+    }
+    
+    // 保存当前播放状态
+    const wasPlaying = !dom.audioPlayerEl.paused;
+    
     // 如果前一首歌已预加载并有效
     if (dom.prevAudioPlayerEl.src && dom.prevAudioPlayerEl.readyState >= 2) {
-        // 保存当前播放状态
-        const wasPlaying = !dom.audioPlayerEl.paused;
-        
         // 交换音频元素
         dom.audioPlayerEl.src = dom.prevAudioPlayerEl.src;
         
-        // 更新UI
-        const title = state.playlist[prevIndex].title || "未知歌曲";
-        const artist = state.playlist[prevIndex].artist || "未知歌手";
-        
-        // 将歌曲和歌手信息合并显示
-        dom.songTitleEl.textContent = `${title} - ${artist}`;
-        
-        // Add tooltip
-        dom.songTitleEl.title = `${title} - ${artist}`;
-        
-        dom.songIndexEl.textContent = `${prevIndex + 1}/${state.playlist.length}`;
-        state.updateCurrentIndex(prevIndex);
-        
-        // 重置歌词容器
-        const lyricsContainer = document.getElementById('lyrics-container');
-        if (lyricsContainer) {
-            lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
-        }
-        
-        // 确保在更新完所有状态后再加载歌词
-        setTimeout(() => {
-            if (state.currentIndex === prevIndex && state.playlist[prevIndex].lrc) {
-                loadLyrics(state.playlist[prevIndex].lrc);
+        // 直接加载歌词，不使用延时
+        if (song.lrc) {
+            loadLyrics(song.lrc);
+        } else {
+            // 无歌词的情况
+            if (lyricsContainer) {
+                lyricsContainer.innerHTML = '<div class="lyrics-placeholder">暂无歌词</div>';
             }
-        }, 100);
+        }
         
         // 如果之前是播放状态，继续播放
         if (wasPlaying) {
             dom.audioPlayerEl.play().catch(e => console.log('播放失败:', e));
         }
-        
-        // 更新预加载
-        preloadAdjacentSongs(prevIndex);
     } else {
         // 常规加载
-        loadSong(prevIndex);
+        loadSong(prevIndex, wasPlaying);
     }
+    
+    // 更新预加载
+    preloadAdjacentSongs(prevIndex);
+    
+    // 保存状态
+    savePlayerState();
 }
 
 // 播放下一首
@@ -372,40 +386,51 @@ export function playNext() {
         nextIndex = (state.currentIndex + 1) % state.playlist.length;
     }
     
+    // 确保索引有效
+    if (nextIndex < 0 || nextIndex >= state.playlist.length) {
+        console.error(`无效的下一首索引: ${nextIndex}, 播放列表长度: ${state.playlist.length}`);
+        return;
+    }
+    
     // 彻底清除歌词状态
     state.updateLyrics([]);
     state.updateCurrentLyricIndex(-1);
+    
+    // 先更新当前索引，确保状态一致
+    state.updateCurrentIndex(nextIndex);
+    
+    // 准备当前歌曲信息
+    const song = state.playlist[nextIndex];
+    const title = song.title || "未知歌曲";
+    const artist = song.artist || "未知歌手";
+    
+    console.log(`播放下一首: ${title} - ${artist}, 索引: ${nextIndex}`);
+    
+    // 更新UI
+    dom.songTitleEl.textContent = `${title} - ${artist}`;
+    dom.songTitleEl.title = `${title} - ${artist}`;
+    dom.songIndexEl.textContent = `${nextIndex + 1}/${state.playlist.length}`;
+    
+    // 重置歌词容器
+    const lyricsContainer = document.getElementById('lyrics-container');
+    if (lyricsContainer) {
+        lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
+    }
     
     // 如果下一首歌已预加载并有效
     if (dom.nextAudioPlayerEl.src && dom.nextAudioPlayerEl.readyState >= 2) {
         // 交换音频元素
         dom.audioPlayerEl.src = dom.nextAudioPlayerEl.src;
         
-        // 更新UI
-        const title = state.playlist[nextIndex].title || "未知歌曲";
-        const artist = state.playlist[nextIndex].artist || "未知歌手";
-        
-        // 将歌曲和歌手信息合并显示
-        dom.songTitleEl.textContent = `${title} - ${artist}`;
-        
-        // Add tooltip
-        dom.songTitleEl.title = `${title} - ${artist}`;
-        
-        dom.songIndexEl.textContent = `${nextIndex + 1}/${state.playlist.length}`;
-        state.updateCurrentIndex(nextIndex);
-        
-        // 重置歌词容器
-        const lyricsContainer = document.getElementById('lyrics-container');
-        if (lyricsContainer) {
-            lyricsContainer.innerHTML = '<div class="lyrics-placeholder">歌词加载中...</div>';
-        }
-        
-        // 确保在更新完所有状态后再加载歌词
-        setTimeout(() => {
-            if (state.currentIndex === nextIndex && state.playlist[nextIndex].lrc) {
-                loadLyrics(state.playlist[nextIndex].lrc);
+        // 直接加载歌词，不使用延时
+        if (song.lrc) {
+            loadLyrics(song.lrc);
+        } else {
+            // 无歌词的情况
+            if (lyricsContainer) {
+                lyricsContainer.innerHTML = '<div class="lyrics-placeholder">暂无歌词</div>';
             }
-        }, 100);
+        }
         
         dom.audioPlayerEl.play().catch(e => {
             console.warn('自动播放被阻止，尝试静音播放', e);
@@ -417,13 +442,16 @@ export function playNext() {
                 console.error('即使静音也无法自动播放:', err);
             });
         });
-        
-        // 更新预加载
-        preloadAdjacentSongs(nextIndex);
     } else {
         // 常规加载
-        loadSong(nextIndex);
+        loadSong(nextIndex, true);
     }
+    
+    // 更新预加载
+    preloadAdjacentSongs(nextIndex);
+    
+    // 保存状态
+    savePlayerState();
 }
 
 // 根据情况显示或隐藏返回按钮
