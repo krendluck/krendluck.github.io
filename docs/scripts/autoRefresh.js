@@ -4,7 +4,7 @@ import * as dom from './dom.js';
 import { logDebug } from './utils.js';
 
 // API配置
-const API_URL = 'https://notion-music-api.netlify.app/api';
+const API_URL = 'https://notion-music-api.netlify.app/api/music';
 
 // 最大尝试次数
 const MAX_RETRY_ATTEMPTS = 3;
